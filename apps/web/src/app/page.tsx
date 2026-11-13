@@ -61,6 +61,34 @@ interface ShiftSummary {
   openedAt: string;
 }
 
+interface LiveEvent {
+  id: string;
+  name: string;
+  league: string;
+  isLive: boolean;
+  minute?: string;
+  score?: string;
+  time?: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeLogo?: string;
+  awayLogo?: string;
+  odds1: number;
+  oddsX: number;
+  odds2: number;
+}
+
+interface AgencyData {
+  id: string;
+  name: string;
+  city: string;
+  address?: string;
+  phone?: string;
+  terminal: string;
+  status: string;
+  currency: string;
+}
+
 export default function PointOfSaleApp() {
   const [activeTab, setActiveTab] = useState<'sales' | 'scanner' | 'cashbox'>('sales');
   const [market, setMarket] = useState<'MX' | 'HT'>('MX');
@@ -69,6 +97,16 @@ export default function PointOfSaleApp() {
   const [selections, setSelections] = useState<PosSelection[]>([]);
   const [issuedTicket, setIssuedTicket] = useState<IssuedTicket | null>(null);
   const [recentTickets, setRecentTickets] = useState<IssuedTicket[]>([]);
+
+  // Real API State
+  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
+  const [apiStatus, setApiStatus] = useState<'connected' | 'syncing' | 'offline'>('connected');
+  const [lastSyncTime, setLastSyncTime] = useState<string>('');
+
+  // Agency data from API
+  const [agenciesList, setAgenciesList] = useState<AgencyData[]>([]);
+  const [selectedAgencyIdx, setSelectedAgencyIdx] = useState<number>(0);
 
   // Shift & Cashier Data
   const [shift, setShift] = useState<ShiftSummary>({
@@ -84,166 +122,82 @@ export default function PointOfSaleApp() {
   // Scanner State
   const [queryCode, setQueryCode] = useState<string>('');
   const [scannedTicket, setScannedTicket] = useState<any | null>(null);
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [isRedeeming, setIsRedeeming] = useState<boolean>(false);
+  const [isCreatingTicket, setIsCreatingTicket] = useState<boolean>(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [payoutSuccess, setPayoutSuccess] = useState<string | null>(null);
-
-  // Agency info based on jurisdiction
-  const agencies = {
-    MX: [
-      { id: 'AG-MX-01', name: 'Banca y Casino Central CDMX', city: 'Ciudad de México', terminal: 'TERM-MX-01' },
-      { id: 'AG-MX-02', name: 'Agencia Plaza Minerva Guadalajara', city: 'Guadalajara', terminal: 'TERM-MX-02' },
-      { id: 'AG-MX-03', name: 'Sucursal San Pedro Garza García', city: 'Monterrey', terminal: 'TERM-MX-03' },
-    ],
-    HT: [
-      { id: 'AG-HT-01', name: 'Banca Paryaj Delmas 33', city: 'Port-au-Prince', terminal: 'TERM-HT-01' },
-      { id: 'AG-HT-02', name: 'Kiosk Pétion-Ville Saint-Pierre', city: 'Pétion-Ville', terminal: 'TERM-HT-02' },
-      { id: 'AG-HT-03', name: 'Banca Cap-Haïtien Boulevard', city: 'Cap-Haïtien', terminal: 'TERM-HT-03' },
-    ],
-  };
-
-  const [selectedAgencyIdx, setSelectedAgencyIdx] = useState<number>(0);
-  const currentAgency = agencies[market][selectedAgencyIdx] || agencies[market][0];
 
   const currencySymbol = market === 'MX' ? 'MXN' : 'HTG';
   const currencySign = market === 'MX' ? '$' : 'G';
   const cashierName = market === 'MX' ? 'Carlos Mendoza (Cajero #104)' : 'Jean-Baptiste Pierre (Caissier #208)';
 
-  // Official Real Fixtures per jurisdiction for rapid POS ticketing
-  const sampleEvents =
-    market === 'MX'
-      ? [
-          {
-            id: 'mx-101',
-            name: 'Club América vs Chivas de Guadalajara',
-            league: 'Liga MX — Torneo Clausura (El Clásico)',
-            isLive: true,
-            minute: "58'",
-            score: '2 - 1',
-            odds1: 1.72,
-            oddsX: 3.9,
-            odds2: 5.4,
-          },
-          {
-            id: 'mx-102',
-            name: 'Cruz Azul vs Pumas UNAM',
-            league: 'Liga MX — Torneo Clausura',
-            isLive: false,
-            time: 'Hoy 20:00',
-            odds1: 2.15,
-            oddsX: 3.35,
-            odds2: 3.25,
-          },
-          {
-            id: 'mx-103',
-            name: 'Tigres UANL vs CF Monterrey',
-            league: 'Liga MX — Clásico Regio',
-            isLive: false,
-            time: 'Mañana 21:05',
-            odds1: 2.4,
-            oddsX: 3.2,
-            odds2: 2.9,
-          },
-          {
-            id: 'mx-104',
-            name: 'Toluca vs Pachuca',
-            league: 'Liga MX — Torneo Clausura',
-            isLive: false,
-            time: 'Domingo 12:00',
-            odds1: 1.95,
-            oddsX: 3.5,
-            odds2: 3.8,
-          },
-          {
-            id: 'ucl-101',
-            name: 'Real Madrid vs Manchester City',
-            league: 'UEFA Champions League',
-            isLive: false,
-            time: 'Miércoles 14:00',
-            odds1: 2.65,
-            oddsX: 3.4,
-            odds2: 2.5,
-          },
-          {
-            id: 'ucl-102',
-            name: 'Bayern München vs Paris Saint-Germain',
-            league: 'UEFA Champions League',
-            isLive: false,
-            time: 'Miércoles 14:00',
-            odds1: 2.2,
-            oddsX: 3.6,
-            odds2: 3.05,
-          },
-        ]
-      : [
-          {
-            id: 'ht-201',
-            name: 'Violette AC vs Racing Club Haïtien',
-            league: 'Championnat National D1 (Derby Haïtien)',
-            isLive: true,
-            minute: "67'",
-            score: '1 - 0',
-            odds1: 1.49,
-            oddsX: 4.3,
-            odds2: 6.9,
-          },
-          {
-            id: 'ht-202',
-            name: 'FICA vs Baltimore SC',
-            league: 'Championnat National D1 Haïti',
-            isLive: false,
-            time: 'Demain 16:00',
-            odds1: 2.25,
-            oddsX: 3.1,
-            odds2: 3.2,
-          },
-          {
-            id: 'ht-203',
-            name: 'AS Capoise vs Don Bosco FC',
-            league: 'Championnat National D1 Haïti',
-            isLive: false,
-            time: 'Dimanche 16:00',
-            odds1: 1.95,
-            oddsX: 3.2,
-            odds2: 3.8,
-          },
-          {
-            id: 'ht-204',
-            name: 'Cavaly AS vs Real Hope FA',
-            league: 'Championnat National D1 Haïti',
-            isLive: false,
-            time: 'Dimanche 18:00',
-            odds1: 2.4,
-            oddsX: 3.0,
-            odds2: 3.0,
-          },
-          {
-            id: 'ucl-101',
-            name: 'Real Madrid vs Manchester City',
-            league: 'Ligue des Champions UEFA',
-            isLive: false,
-            time: 'Mercredi 15:00',
-            odds1: 2.65,
-            oddsX: 3.4,
-            odds2: 2.5,
-          },
-          {
-            id: 'ucl-102',
-            name: 'Paris Saint-Germain vs Bayern Munich',
-            league: 'Ligue des Champions UEFA',
-            isLive: false,
-            time: 'Mercredi 15:00',
-            odds1: 2.2,
-            oddsX: 3.6,
-            odds2: 3.05,
-          },
-        ];
+  // Current Agency
+  const currentAgency: AgencyData = agenciesList[selectedAgencyIdx] || {
+    id: market === 'MX' ? 'AG-MX-01' : 'AG-HT-01',
+    name: market === 'MX' ? 'Banca y Casino Central CDMX' : 'Banca Paryaj Delmas 33',
+    city: market === 'MX' ? 'Ciudad de México' : 'Port-au-Prince',
+    terminal: market === 'MX' ? 'TERM-MX-01' : 'TERM-HT-01',
+    status: 'OPERATIONAL',
+    currency: currencySymbol,
+  };
+
+  // 1. Fetch Real Agencies from API
+  const fetchAgencies = async (country: 'MX' | 'HT') => {
+    try {
+      const res = await fetch(`/api/pos/agencies?country=${country}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.agencies && data.agencies.length > 0) {
+          setAgenciesList(data.agencies);
+          setSelectedAgencyIdx(0);
+        }
+      }
+    } catch (e) {
+      console.warn('Error fetching agencies from API:', e);
+    }
+  };
+
+  // 2. Fetch Real Live Sports Events from API
+  const fetchLiveSportsFeed = async (mkt: 'MX' | 'HT') => {
+    setIsLoadingEvents(true);
+    setApiStatus('syncing');
+    try {
+      const res = await fetch(`/api/sports/feed?market=${mkt}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.events && Array.isArray(data.events)) {
+          setLiveEvents(data.events);
+          setApiStatus('connected');
+          setLastSyncTime(new Date().toLocaleTimeString());
+        }
+      } else {
+        setApiStatus('offline');
+      }
+    } catch (e) {
+      console.error('Error fetching real sports feed:', e);
+      setApiStatus('offline');
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgencies(market);
+    fetchLiveSportsFeed(market);
+  }, [market]);
 
   const totalOdds = selections.reduce((acc, curr) => acc * curr.odds, 1);
   const potentialPayout = Math.round(stake * totalOdds * 100) / 100;
 
-  const handleAddPick = (evt: any, pick: '1' | 'X' | '2', odds: number) => {
-    const parts = evt.name.split(' vs ');
-    const pickName = pick === '1' ? parts[0] : pick === '2' ? parts[1] : 'Empate / Nul';
+  const handleAddPick = (evt: LiveEvent, pick: '1' | 'X' | '2', odds: number) => {
+    const pickName =
+      pick === '1'
+        ? evt.homeTeam || evt.name.split(' vs ')[0]
+        : pick === '2'
+        ? evt.awayTeam || evt.name.split(' vs ')[1]
+        : 'Empate / Nul';
+
     const newSel: PosSelection = {
       eventId: evt.id,
       eventName: evt.name,
@@ -251,134 +205,130 @@ export default function PointOfSaleApp() {
       selection: pickName,
       odds,
     };
+
     setSelections((prev) => {
       const filtered = prev.filter((s) => s.eventId !== evt.id);
       return [...filtered, newSel];
     });
   };
 
-  const handlePrintTicket = () => {
+  // Real API Ticket Creation
+  const handlePrintTicket = async () => {
     if (selections.length === 0) return;
+    setIsCreatingTicket(true);
 
-    const timestampStr = Date.now().toString(36).toUpperCase();
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-    const ticketNumber = `TK-${new Date().getFullYear()}-${timestampStr}-${randomSuffix}`;
-    const barcode = `BC${Date.now()}${randomSuffix}`;
+    try {
+      const res = await fetch('/api/pos/tickets/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          terminalCode: currentAgency.terminal,
+          agencyName: currentAgency.name,
+          agencyCity: currentAgency.city,
+          selections,
+          stake,
+          currency: currencySymbol,
+          betType: selections.length > 1 ? `PARLAY (${selections.length} PARTIDOS)` : 'SIMPLE',
+        }),
+      });
 
-    const ticket: IssuedTicket = {
-      ticketNumber,
-      barcode,
-      securityHash: `HMAC-${Math.random().toString(16).substring(2, 10).toUpperCase()}`,
-      terminalCode: currentAgency.terminal,
-      agencyName: currentAgency.name,
-      agencyCity: currentAgency.city,
-      betType: selections.length > 1 ? `PARLAY (${selections.length} PARTIDOS)` : 'SIMPLE',
-      stake,
-      totalOdds: Math.round(totalOdds * 100) / 100,
-      potentialPayout,
-      currency: currencySymbol,
-      createdAt: new Date().toLocaleTimeString(),
-      expiresAt: new Date(Date.now() + 60 * 86400000).toLocaleDateString(),
-      selections,
-      termsNotice:
-        market === 'MX'
-          ? 'OPERACIÓN EXCLUSIVA DE PUNTO DE VENTA. Autorizado por SEGOB (México). Validez de cobro: 60 días en cualquier terminal física autorizada.'
-          : 'OPERASYON EKSKLIZIF BANCA / KIOSK. Valable selon la Réglementation Loterie Nationale d’Haïti (LEH). Période de grâce 60 jours.',
-    };
-
-    setIssuedTicket(ticket);
-    setRecentTickets((prev) => [ticket, ...prev.slice(0, 9)]);
-    setCashBalance((prev) => prev + stake);
-    setShift((prev) => ({
-      ...prev,
-      ticketsSold: prev.ticketsSold + 1,
-      totalSales: prev.totalSales + stake,
-      closingBalance: prev.closingBalance + stake,
-    }));
+      if (res.ok) {
+        const data = await res.json();
+        const ticket: IssuedTicket = data.ticket;
+        setIssuedTicket(ticket);
+        setRecentTickets((prev) => [ticket, ...prev.slice(0, 9)]);
+        setCashBalance((prev) => prev + stake);
+        setShift((prev) => ({
+          ...prev,
+          ticketsSold: prev.ticketsSold + 1,
+          totalSales: prev.totalSales + stake,
+          closingBalance: prev.closingBalance + stake,
+        }));
+      } else {
+        alert('Error al emitir el boleto en la API.');
+      }
+    } catch (err) {
+      console.error('Error emitting ticket:', err);
+      alert('Error de conexión con la API de tickets.');
+    } finally {
+      setIsCreatingTicket(false);
+    }
   };
 
-  const handleScanTicket = () => {
+  // Real API Ticket Verification
+  const handleScanTicket = async () => {
     setScanError(null);
     setPayoutSuccess(null);
     if (!queryCode.trim()) return;
 
-    // Search recent issued tickets first
-    const found = recentTickets.find(
-      (t) => t.ticketNumber.toLowerCase().includes(queryCode.toLowerCase()) || t.barcode.includes(queryCode),
-    );
-
-    if (found) {
-      setScannedTicket({
-        ...found,
-        status: 'WON',
-        canRedeem: true,
-      });
-      return;
+    setIsVerifying(true);
+    try {
+      const res = await fetch(`/api/pos/tickets/verify?code=${encodeURIComponent(queryCode.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.found && data.ticket) {
+          setScannedTicket(data.ticket);
+        } else {
+          setScanError('Boleto no encontrado en la base de datos de terminales.');
+        }
+      } else {
+        setScanError('Error al contactar la API de validación.');
+      }
+    } catch (e) {
+      console.error('Error verifying ticket:', e);
+      setScanError('Error de red al consultar el boleto.');
+    } finally {
+      setIsVerifying(false);
     }
-
-    if (issuedTicket && (issuedTicket.ticketNumber.includes(queryCode) || issuedTicket.barcode.includes(queryCode))) {
-      setScannedTicket({
-        ...issuedTicket,
-        status: 'WON',
-        canRedeem: true,
-      });
-      return;
-    }
-
-    // Default simulated winner ticket for testing
-    const sampleStake = 300;
-    const sampleOdds = 4.25;
-    setScannedTicket({
-      ticketNumber: queryCode.startsWith('TK-') ? queryCode : `TK-2026-${queryCode.toUpperCase()}`,
-      barcode: `BC${Date.now()}`,
-      securityHash: 'SEC-89A7B39F',
-      terminalCode: currentAgency.terminal,
-      agencyName: currentAgency.name,
-      betType: 'PARLAY (2 Partidos)',
-      stake: sampleStake,
-      totalOdds: sampleOdds,
-      potentialPayout: Math.round(sampleStake * sampleOdds),
-      currency: currencySymbol,
-      status: 'WON',
-      createdAt: new Date(Date.now() - 7200000).toLocaleTimeString(),
-      canRedeem: true,
-      selections: [
-        {
-          eventName: market === 'MX' ? 'Club América vs Chivas' : 'Violette AC vs Racing Club',
-          marketName: '1X2',
-          selection: market === 'MX' ? 'Club América' : 'Violette AC',
-          odds: 1.85,
-          status: 'ACERTADO',
-        },
-        {
-          eventName: market === 'MX' ? 'Cruz Azul vs Pumas' : 'FICA vs Baltimore SC',
-          marketName: '1X2',
-          selection: market === 'MX' ? 'Cruz Azul' : 'FICA',
-          odds: 2.3,
-          status: 'ACERTADO',
-        },
-      ],
-    });
   };
 
-  const handleRedeemCash = () => {
+  // Real API Ticket Cash Redemption
+  const handleRedeemCash = async () => {
     if (!scannedTicket) return;
     const amount = scannedTicket.potentialPayout;
+
     if (cashBalance < amount) {
-      alert(`Atención: Efectivo insuficiente en gaveta para pagar este premio ($${amount.toLocaleString()} ${currencySymbol}). Solicita transferencia de fondo a la administración.`);
+      alert(
+        `Efectivo insuficiente en gaveta para pagar este premio (${currencySign} ${amount.toLocaleString()} ${currencySymbol}). Solicita transferencia de fondo a la administración.`,
+      );
       return;
     }
-    setCashBalance((prev) => Math.max(0, prev - amount));
-    setShift((prev) => ({
-      ...prev,
-      ticketsRedeemed: prev.ticketsRedeemed + 1,
-      totalPaid: prev.totalPaid + amount,
-      closingBalance: prev.closingBalance - amount,
-    }));
-    setPayoutSuccess(
-      `¡Premio de ${currencySign} ${amount.toLocaleString()} ${currencySymbol} PAGADO EN EFECTIVO! Recibo de pago entregado al cliente.`,
-    );
-    setScannedTicket((prev: any) => ({ ...prev, status: 'PAID', canRedeem: false }));
+
+    setIsRedeeming(true);
+    try {
+      const res = await fetch('/api/pos/tickets/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: scannedTicket.ticketNumber,
+          terminalCode: currentAgency.terminal,
+          cashierId: cashierName,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCashBalance((prev) => Math.max(0, prev - amount));
+        setShift((prev) => ({
+          ...prev,
+          ticketsRedeemed: prev.ticketsRedeemed + 1,
+          totalPaid: prev.totalPaid + amount,
+          closingBalance: prev.closingBalance - amount,
+        }));
+        setPayoutSuccess(
+          `¡Premio de ${currencySign} ${amount.toLocaleString()} ${currencySymbol} PAGADO EN EFECTIVO! Recibo oficial #${data.redemption?.receiptNumber || 'REC-OK'}.`,
+        );
+        setScannedTicket((prev: any) => ({ ...prev, status: 'PAID', canRedeem: false }));
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Error al procesar el pago del boleto');
+      }
+    } catch (e) {
+      console.error('Error redeeming ticket:', e);
+      alert('Error de conexión con la API de pagos.');
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   return (
@@ -405,7 +355,7 @@ export default function PointOfSaleApp() {
           </div>
         </div>
 
-        {/* Right: Cash In Drawer & Jurisdiction Switcher */}
+        {/* Right: Cash In Drawer, Agency & Jurisdiction Switcher */}
         <div className="flex items-center gap-4 flex-wrap">
           {/* Agency Selector Dropdown */}
           <div className="hidden md:flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300">
@@ -415,7 +365,7 @@ export default function PointOfSaleApp() {
               onChange={(e) => setSelectedAgencyIdx(Number(e.target.value))}
               className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer"
             >
-              {agencies[market].map((ag, idx) => (
+              {agenciesList.map((ag, idx) => (
                 <option key={ag.id} value={idx} className="bg-slate-900 text-white">
                   {ag.city} — {ag.name}
                 </option>
@@ -440,7 +390,6 @@ export default function PointOfSaleApp() {
               onClick={() => {
                 setMarket('MX');
                 setSelections([]);
-                setSelectedAgencyIdx(0);
               }}
               className={`px-3 py-1.5 rounded-lg transition-all ${
                 market === 'MX'
@@ -454,7 +403,6 @@ export default function PointOfSaleApp() {
               onClick={() => {
                 setMarket('HT');
                 setSelections([]);
-                setSelectedAgencyIdx(0);
               }}
               className={`px-3 py-1.5 rounded-lg transition-all ${
                 market === 'HT'
@@ -468,7 +416,7 @@ export default function PointOfSaleApp() {
         </div>
       </header>
 
-      {/* 2. POS Navigation Bar (Sales / Scanner / Cashbox) */}
+      {/* 2. POS Navigation Bar & Live Feed API Status */}
       <div className="bg-[#0e1d23] border-b border-slate-800/80 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
@@ -507,10 +455,22 @@ export default function PointOfSaleApp() {
         </div>
 
         <div className="flex items-center gap-3 text-xs text-slate-400 font-mono">
-          <div className="flex items-center gap-1.5">
-            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span className="text-emerald-400 font-bold">LÍNEA DEDICADA ACTIVA</span>
+          {/* Live Feed API Status Pill */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold">
+            <Radio className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
+            <span>API REAL CONECTADA</span>
+            {lastSyncTime && <span className="text-[10px] text-slate-400 ml-1">({lastSyncTime})</span>}
           </div>
+
+          <button
+            onClick={() => fetchLiveSportsFeed(market)}
+            disabled={isLoadingEvents}
+            className="p-1 rounded hover:bg-slate-800 text-slate-300 hover:text-white"
+            title="Sincronizar cuotas con la API"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoadingEvents ? 'animate-spin text-emerald-400' : ''}`} />
+          </button>
+
           <span>•</span>
           <div className="flex items-center gap-1">
             <UserCheck className="w-3.5 h-3.5 text-slate-400" />
@@ -521,7 +481,7 @@ export default function PointOfSaleApp() {
 
       {/* 3. Main Content Grid */}
       <main className="flex-1 p-4 sm:p-6 max-w-7xl mx-auto w-full">
-        {/* TAB 1: TICKET SALES & FAST CASHER DESK */}
+        {/* TAB 1: TICKET SALES & FAST CASHIER DESK */}
         {activeTab === 'sales' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left: Sports Catalog for Fast Ticketing */}
@@ -529,70 +489,92 @@ export default function PointOfSaleApp() {
               <div className="flex flex-wrap items-center justify-between pb-3 border-b border-slate-800 gap-2">
                 <div>
                   <h2 className="font-black text-base text-white flex items-center gap-2">
-                    <span>⚽ Catálogo Oficial de Partidos en Ventanilla</span>
+                    <span>⚽ Partidos en Vivo y Oficiales (API Feed en Tiempo Real)</span>
                   </h2>
                   <p className="text-xs text-slate-400">
                     {market === 'MX'
-                      ? 'Cuotas oficiales auditadas para agencias y terminales SEGOB'
-                      : 'Kòt ofisyèl verifye pou banca ak kiosk Loterie Nationale d’Haïti (LEH)'}
+                      ? 'Cuotas oficiales de Liga BBVA MX y UEFA Champions League auditadas para terminales SEGOB'
+                      : 'Kòt ofisyèl Championnat D1 ak UEFA verifye pou banca ak kiosk Loterie Nationale d’Haïti (LEH)'}
                   </p>
                 </div>
-                <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30 font-bold">
-                  {sampleEvents.length} Eventos Disponibles
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30 font-bold">
+                    {liveEvents.length} Eventos Sincronizados
+                  </span>
+                  <button
+                    onClick={() => fetchLiveSportsFeed(market)}
+                    className="p-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300"
+                    title="Actualizar eventos"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingEvents ? 'animate-spin text-emerald-400' : ''}`} />
+                  </button>
+                </div>
               </div>
 
               {/* Event Cards */}
-              <div className="space-y-3">
-                {sampleEvents.map((evt) => (
-                  <div
-                    key={evt.id}
-                    className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-amber-400 tracking-wider uppercase font-mono">
-                          {evt.league}
-                        </span>
-                        {evt.isLive && (
-                          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[9px] font-mono font-bold animate-pulse">
-                            ● EN DIRECTO ({evt.minute} • {evt.score})
+              {isLoadingEvents ? (
+                <div className="py-16 text-center space-y-3">
+                  <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
+                  <p className="text-xs text-slate-400 font-mono">
+                    Conectando con la API real de deportes y descargando cuotas...
+                  </p>
+                </div>
+              ) : liveEvents.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 text-xs">
+                  No hay eventos disponibles en este momento. Haz clic en sincronizar.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {liveEvents.map((evt) => (
+                    <div
+                      key={evt.id}
+                      className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-amber-400 tracking-wider uppercase font-mono">
+                            {evt.league}
                           </span>
-                        )}
-                        {!evt.isLive && (
-                          <span className="text-[10px] text-slate-400 font-mono">({evt.time})</span>
-                        )}
+                          {evt.isLive && (
+                            <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[9px] font-mono font-bold animate-pulse">
+                              ● EN VIVO ({evt.minute || 'LIVE'} {evt.score ? `• ${evt.score}` : ''})
+                            </span>
+                          )}
+                          {!evt.isLive && evt.time && (
+                            <span className="text-[10px] text-slate-400 font-mono">({evt.time})</span>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-sm text-white">{evt.name}</h3>
                       </div>
-                      <h3 className="font-bold text-sm text-white">{evt.name}</h3>
-                    </div>
 
-                    {/* Odds 1X2 Buttons */}
-                    <div className="grid grid-cols-3 gap-2 min-w-[280px]">
-                      <button
-                        onClick={() => handleAddPick(evt, '1', evt.odds1)}
-                        className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
-                      >
-                        <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">1 (Local)</span>
-                        <span className="font-mono font-black text-sm">{evt.odds1.toFixed(2)}</span>
-                      </button>
-                      <button
-                        onClick={() => handleAddPick(evt, 'X', evt.oddsX)}
-                        className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
-                      >
-                        <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">X (Empate)</span>
-                        <span className="font-mono font-black text-sm">{evt.oddsX.toFixed(2)}</span>
-                      </button>
-                      <button
-                        onClick={() => handleAddPick(evt, '2', evt.odds2)}
-                        className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
-                      >
-                        <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">2 (Visita)</span>
-                        <span className="font-mono font-black text-sm">{evt.odds2.toFixed(2)}</span>
-                      </button>
+                      {/* Odds 1X2 Buttons */}
+                      <div className="grid grid-cols-3 gap-2 min-w-[280px]">
+                        <button
+                          onClick={() => handleAddPick(evt, '1', evt.odds1)}
+                          className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
+                        >
+                          <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">1 (Local)</span>
+                          <span className="font-mono font-black text-sm">{evt.odds1.toFixed(2)}</span>
+                        </button>
+                        <button
+                          onClick={() => handleAddPick(evt, 'X', evt.oddsX)}
+                          className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
+                        >
+                          <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">X (Empate)</span>
+                          <span className="font-mono font-black text-sm">{evt.oddsX.toFixed(2)}</span>
+                        </button>
+                        <button
+                          onClick={() => handleAddPick(evt, '2', evt.odds2)}
+                          className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
+                        >
+                          <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">2 (Visita)</span>
+                          <span className="font-mono font-black text-sm">{evt.odds2.toFixed(2)}</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Right: Cashier Bet Slip & Thermal Slip Generation */}
@@ -694,12 +676,12 @@ export default function PointOfSaleApp() {
 
               {/* Action Button: Print */}
               <button
-                disabled={selections.length === 0}
+                disabled={selections.length === 0 || isCreatingTicket}
                 onClick={handlePrintTicket}
                 className="mt-5 w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 disabled:opacity-40 text-black font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/25 transition-all active:scale-[0.98]"
               >
                 <Printer className="w-5 h-5" />
-                Emitir e Imprimir Ticket Físico (F8)
+                {isCreatingTicket ? 'Generando en API...' : 'Emitir e Imprimir Ticket Físico (F8)'}
               </button>
             </div>
           </div>
@@ -735,11 +717,21 @@ export default function PointOfSaleApp() {
               </div>
               <button
                 onClick={handleScanTicket}
-                className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-sm transition-colors uppercase tracking-wider"
+                disabled={isVerifying}
+                className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-black text-sm transition-colors uppercase tracking-wider flex items-center gap-2"
               >
-                Verificar
+                {isVerifying ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
+                <span>{isVerifying ? 'Verificando...' : 'Verificar API'}</span>
               </button>
             </div>
+
+            {/* Scan Error Alert */}
+            {scanError && (
+              <div className="mb-6 p-4 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-sm flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+                <span>{scanError}</span>
+              </div>
+            )}
 
             {/* Payout Success Alert */}
             {payoutSuccess && (
@@ -808,12 +800,16 @@ export default function PointOfSaleApp() {
 
                 {scannedTicket.canRedeem && (
                   <button
+                    disabled={isRedeeming}
                     onClick={handleRedeemCash}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 text-black font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/25"
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:brightness-110 disabled:opacity-50 text-black font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/25"
                   >
                     <Coins className="w-5 h-5" />
-                    Pagar Premio en Efectivo ({currencySign} {scannedTicket.potentialPayout?.toLocaleString()}{' '}
-                    {scannedTicket.currency})
+                    <span>
+                      {isRedeeming
+                        ? 'Registrando Pago en API...'
+                        : `Pagar Premio en Efectivo (${currencySign} ${scannedTicket.potentialPayout?.toLocaleString()} ${scannedTicket.currency})`}
+                    </span>
                   </button>
                 )}
               </div>
