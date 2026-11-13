@@ -28,6 +28,7 @@ model Country {
 
   users            User[]
   competitions     Competition[]
+  posAgencies      PosAgency[]
 
   @@index([code])
 }
@@ -426,5 +427,93 @@ model AuditLog {
   @@index([userId])
   @@index([action])
   @@index([createdAt])
+}
+
+// ----------------------------------------------------
+// 7. Point of Sale (POS), Retail & Agencias Físicas
+// ----------------------------------------------------
+
+model PosAgency {
+  id          String        @id @default(uuid())
+  code        String        @unique // "AG-MX-01", "AG-HT-DELMAS"
+  name        String
+  countryId   String
+  city        String
+  address     String
+  phone       String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  country     Country       @relation(fields: [countryId], references: [id])
+  terminals   PosTerminal[]
+
+  @@index([code])
+  @@index([countryId])
+}
+
+model PosTerminal {
+  id           String      @id @default(uuid())
+  terminalCode String      @unique // "TERM-01", "TERM-02"
+  agencyId     String
+  cashierName  String      @default("Cajero Principal")
+  cashBalance  Decimal     @default(5000.0000) @db.Decimal(18, 4)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  agency       PosAgency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  tickets      PosTicket[]
+  shifts       PosShift[]
+
+  @@index([terminalCode])
+  @@index([agencyId])
+}
+
+model PosTicket {
+  id              String      @id @default(uuid())
+  ticketNumber    String      @unique // "TK-2026-98124"
+  securityHash    String      // HMAC-SHA256 barcode verification
+  terminalId      String
+  betType         String      @default("PARLAY") // SINGLE, PARLAY
+  stake           Decimal     @db.Decimal(18, 4)
+  totalOdds       Float
+  potentialPayout Decimal     @db.Decimal(18, 4)
+  currency        String      @default("MXN")
+  status          String      @default("PENDING") // PENDING, WON, PAID, LOST, CANCELLED
+  selections      String      // JSON string of events, picks, odds
+  barcode         String      @unique
+  paidAt          DateTime?
+  paidByCashier   String?
+  expiresAt       DateTime
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  terminal        PosTerminal @relation(fields: [terminalId], references: [id], onDelete: Cascade)
+
+  @@index([ticketNumber])
+  @@index([barcode])
+  @@index([status])
+  @@index([terminalId])
+}
+
+model PosShift {
+  id               String      @id @default(uuid())
+  terminalId       String
+  cashierName      String
+  openedAt         DateTime    @default(now())
+  closedAt         DateTime?
+  openingFloat     Decimal     @db.Decimal(18, 4)
+  totalSalesCash   Decimal     @default(0.0000) @db.Decimal(18, 4)
+  totalPayoutsCash Decimal     @default(0.0000) @db.Decimal(18, 4)
+  closingFloat     Decimal?    @db.Decimal(18, 4)
+  status           String      @default("OPEN") // OPEN, CLOSED
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  terminal         PosTerminal @relation(fields: [terminalId], references: [id], onDelete: Cascade)
+
+  @@index([terminalId])
+  @@index([status])
 }
 

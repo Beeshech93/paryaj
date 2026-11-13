@@ -99,3 +99,4 @@ export class EvolutionGamingRealAdapter implements ILiveCasinoProviderAdapter {
     };
   }
 }
+

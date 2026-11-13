@@ -14,6 +14,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { PromotionsModule } from './promotions/promotions.module';
 import { AffiliatesModule } from './affiliates/affiliates.module';
 import { ReportsModule } from './reports/reports.module';
+import { PosModule } from './pos/pos.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ReportsModule } from './reports/reports.module';
     PromotionsModule,
     AffiliatesModule,
     ReportsModule,
+    PosModule,
   ],
   providers: [
     {

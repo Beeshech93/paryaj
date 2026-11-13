@@ -17,6 +17,7 @@ import {
   Flame,
   Sparkles,
   Gift,
+  Store,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -216,6 +217,15 @@ export const Header: React.FC = () => {
             >
               <Gift className="w-4 h-4 text-brand-gold" />
               {t.nav.promotions}
+            </Link>
+
+            <Link
+              href="/pos"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black transition-all shadow-sm"
+              title="Abrir Terminal de Punto de Venta / Cajero Físico"
+            >
+              <Store className="w-3.5 h-3.5" />
+              Terminal POS
             </Link>
           </nav>
         </div>

@@ -116,3 +116,4 @@ export class PragmaticPlayRealAdapter implements ICasinoProviderAdapter {
     return map[slugOrTitle] || 'vs20olympgate';
   }
 }
+
