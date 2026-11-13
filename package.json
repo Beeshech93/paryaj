@@ -1,0 +1,31 @@
+{
+  "name": "new-brand-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma de Casino Online, Sportsbook y Juegos Digitales - NEW BRAND",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:api": "npm run build --workspace=apps/api",
+    "build": "npm run build:api && npm run build:web",
+    "test:web": "npm run test --workspace=apps/web",
+    "test:api": "npm run test --workspace=apps/api",
+    "test": "npm run test:api && npm run test:web",
+    "lint": "npm run lint --workspace=apps/api && npm run lint --workspace=apps/web"
+  },
+  "keywords": [
+    "casino",
+    "sportsbook",
+    "regulated-entertainment",
+    "nextjs",
+    "nestjs",
+    "typescript"
+  ],
+  "author": "NEW BRAND Engineering Team",
+  "license": "UNLICENSED"
+}
+

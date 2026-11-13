@@ -1,0 +1,33 @@
+services:
+  # Backend NestJS REST API
+  - type: web
+    name: new-brand-api
+    env: node
+    plan: standard
+    region: oregon
+    rootDir: apps/api
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REAL_MONEY_ENABLED
+        value: "false"
+      - key: DEFAULT_JURISDICTIONS
+        value: "MX,HT"
+      - key: DEFAULT_LANGUAGES
+        value: "es,fr"
+
