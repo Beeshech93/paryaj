@@ -17,3 +17,4 @@ export class RedeemPosTicketDto {
   @IsNotEmpty()
   cashierName: string;
 }
+

@@ -87,8 +87,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setRealBalance(parseFloat(savedRealBal));
       }
       const savedMode = localStorage.getItem('nb_operating_mode');
-      if (savedMode) {
-        setIsRealModeState(savedMode === 'real');
+      if (savedMode === 'demo') {
+        setIsRealModeState(false);
+      } else {
+        setIsRealModeState(true);
       }
       const savedUser = localStorage.getItem('nb_user');
       if (savedUser) {

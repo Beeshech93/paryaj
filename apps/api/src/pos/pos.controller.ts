@@ -59,3 +59,4 @@ export class PosController {
     return this.posService.redeemTicket(dto);
   }
 }
+

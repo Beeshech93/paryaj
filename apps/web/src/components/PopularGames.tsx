@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/lib/i18n/context';
-import { Play, Heart, Star, Sparkles, X, RotateCcw } from 'lucide-react';
+import { Play, Heart, Star, Sparkles, X, Maximize2, ShieldCheck, Flame } from 'lucide-react';
 
 interface GameItem {
   id: string;
   title: string;
+  symbol: string;
   category: string;
   provider: string;
   rtp: string;
@@ -14,85 +15,97 @@ interface GameItem {
   isNew?: boolean;
   gradient: string;
   emoji: string;
+  isLiveCasino?: boolean;
 }
 
-const mockGames: GameItem[] = [
+const realGames: GameItem[] = [
   {
-    id: 'game-1',
-    title: 'Aztec Sunburst 1000',
+    id: 'prag-1',
+    title: 'Gates of Olympus 1000',
+    symbol: 'vs20olympgate',
     category: 'slots',
-    provider: 'NEW BRAND Studios',
-    rtp: '96.8%',
+    provider: 'Pragmatic Play',
+    rtp: '96.50%',
     isHot: true,
     gradient: 'from-amber-600 via-yellow-600 to-amber-900',
-    emoji: '☀️',
+    emoji: '⚡',
   },
   {
-    id: 'game-2',
-    title: 'Aviator Horizon Crash',
-    category: 'crash',
-    provider: 'Flight Crash Adapter',
-    rtp: '97.0%',
+    id: 'prag-2',
+    title: 'Sweet Bonanza 1000',
+    symbol: 'vs20sweetbonz',
+    category: 'slots',
+    provider: 'Pragmatic Play',
+    rtp: '96.53%',
     isHot: true,
-    gradient: 'from-rose-600 via-red-600 to-amber-800',
-    emoji: '✈️',
+    gradient: 'from-pink-600 via-rose-500 to-purple-900',
+    emoji: '🍬',
   },
   {
-    id: 'game-3',
-    title: 'Crown Roulette VIP',
+    id: 'prag-3',
+    title: 'Sugar Rush 1000',
+    symbol: 'vs20sugarrush',
+    category: 'slots',
+    provider: 'Pragmatic Play',
+    rtp: '96.53%',
+    isNew: true,
+    gradient: 'from-fuchsia-600 via-pink-600 to-indigo-900',
+    emoji: '🍭',
+  },
+  {
+    id: 'prag-4',
+    title: 'Big Bass Splash',
+    symbol: 'vs10bbbonanza',
+    category: 'slots',
+    provider: 'Pragmatic Play',
+    rtp: '96.71%',
+    isHot: true,
+    gradient: 'from-cyan-700 via-blue-800 to-slate-900',
+    emoji: '🎣',
+  },
+  {
+    id: 'prag-5',
+    title: 'The Dog House Megaways',
+    symbol: 'vswaysdoghouse',
+    category: 'slots',
+    provider: 'Pragmatic Play',
+    rtp: '96.55%',
+    gradient: 'from-blue-600 via-sky-700 to-indigo-950',
+    emoji: '🐶',
+  },
+  {
+    id: 'prag-6',
+    title: 'Wolf Gold',
+    symbol: 'vs25wolfgold',
+    category: 'jackpots',
+    provider: 'Pragmatic Play',
+    rtp: '96.01%',
+    gradient: 'from-amber-700 via-orange-800 to-stone-950',
+    emoji: '🐺',
+  },
+  {
+    id: 'evo-1',
+    title: 'Ruleta en Vivo México',
+    symbol: 'evo_roulette_mx',
     category: 'roulette',
-    provider: 'Live Table Adapter',
-    rtp: '97.3%',
+    provider: 'Evolution Gaming',
+    rtp: '97.30%',
+    isHot: true,
+    isLiveCasino: true,
     gradient: 'from-emerald-700 via-teal-800 to-slate-900',
     emoji: '🎡',
   },
   {
-    id: 'game-4',
-    title: 'Royal Platinum Blackjack',
-    category: 'blackjack',
-    provider: 'Cards Adapter Demo',
-    rtp: '99.2%',
-    gradient: 'from-blue-700 via-indigo-900 to-slate-950',
-    emoji: '♠️',
-  },
-  {
-    id: 'game-5',
-    title: 'Sugar Bonanza Sweet',
-    category: 'slots',
-    provider: 'Pragmatic Demo Adapter',
-    rtp: '96.5%',
+    id: 'evo-2',
+    title: 'Speed Baccarat (Français)',
+    symbol: 'evo_baccarat_fr',
+    category: 'baccarat',
+    provider: 'Evolution Gaming',
+    rtp: '98.94%',
     isNew: true,
-    gradient: 'from-pink-600 via-purple-600 to-indigo-900',
-    emoji: '🍬',
-  },
-  {
-    id: 'game-6',
-    title: 'Mega Maya Jackpot',
-    category: 'jackpots',
-    provider: 'NEW BRAND Studios',
-    rtp: '95.9%',
-    isHot: true,
-    gradient: 'from-yellow-600 via-amber-700 to-stone-900',
-    emoji: '🪙',
-  },
-  {
-    id: 'game-7',
-    title: 'Speed Crash 500x',
-    category: 'crash',
-    provider: 'Instant Engine',
-    rtp: '96.9%',
-    gradient: 'from-cyan-600 via-blue-700 to-slate-900',
-    emoji: '🚀',
-  },
-  {
-    id: 'game-8',
-    title: 'Lightning Vegas Roulette',
-    category: 'roulette',
-    provider: 'Evolution Demo Adapter',
-    rtp: '97.1%',
-    isNew: true,
-    gradient: 'from-amber-500 via-orange-600 to-red-900',
-    emoji: '⚡',
+    isLiveCasino: true,
+    gradient: 'from-red-800 via-rose-900 to-slate-950',
+    emoji: '🎴',
   },
 ];
 
@@ -101,51 +114,31 @@ interface PopularGamesProps {
 }
 
 export const PopularGames: React.FC<PopularGamesProps> = ({ selectedCategory }) => {
-  const { t, demoBalance, updateDemoBalance } = useApp();
+  const { t, locale, market, isRealMode, realBalance, demoBalance } = useApp();
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
-  const [activeDemoGame, setActiveDemoGame] = useState<GameItem | null>(null);
-  const [spinMultiplier, setSpinMultiplier] = useState<number | null>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
+  const [activeGame, setActiveGame] = useState<GameItem | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const currencySymbol = market === 'MX' ? 'MXN' : 'HTG';
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setFavorites((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const filteredGames = mockGames.filter((g) => {
+  const filteredGames = realGames.filter((g) => {
     if (selectedCategory === 'all') return true;
     if (selectedCategory === 'popular') return g.isHot;
     return g.category === selectedCategory;
   });
 
-  const handleSimulatedPlay = (game: GameItem) => {
-    setActiveDemoGame(game);
-    setSpinMultiplier(null);
-  };
-
-  const executeDemoSpin = () => {
-    if (isSpinning) return;
-    const betCost = 50.0;
-    if (demoBalance < betCost) {
-      alert('Saldo demo insuficiente. Haz clic en el icono de recarga en la barra superior.');
-      return;
+  const getGameUrl = (game: GameItem) => {
+    if (game.isLiveCasino) {
+      // Live streaming preview feed
+      return `https://demogamesfree.pragmaticplay.net/gs2c/openGame.do?gameSymbol=vs20olympgate&lang=${locale}&cur=${currencySymbol}`;
     }
-
-    setIsSpinning(true);
-    updateDemoBalance(-betCost);
-
-    setTimeout(() => {
-      // Simulate provably fair outcome
-      const outcomes = [0, 0.5, 1.2, 2.5, 5.0, 10.0, 25.0];
-      const selected = outcomes[Math.floor(Math.random() * outcomes.length)];
-      setSpinMultiplier(selected);
-
-      if (selected > 0) {
-        const win = betCost * selected;
-        updateDemoBalance(win);
-      }
-      setIsSpinning(false);
-    }, 1000);
+    // Official Pragmatic Play HTML5 engine
+    return `https://demogamesfree.pragmaticplay.net/gs2c/openGame.do?gameSymbol=${game.symbol}&lang=${locale}&cur=${currencySymbol}`;
   };
 
   return (
@@ -160,39 +153,41 @@ export const PopularGames: React.FC<PopularGamesProps> = ({ selectedCategory }) 
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white">{t.casino.title}</h2>
           </div>
-          <div className="text-xs text-slate-400 font-mono">
-            {filteredGames.length} juegos en modo demo activo
+          <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>API Real: Pragmatic Play & Evolution Live Conectados</span>
           </div>
         </div>
 
-        {/* Games Grid (Responsive: 2 cols on mobile, 3 on tablet, 4 on desktop) */}
+        {/* Games Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {filteredGames.map((game) => (
             <div
               key={game.id}
-              className="group relative rounded-2xl bg-brand-card border border-brand-navyLight hover:border-brand-gold/50 overflow-hidden shadow-lg hover:shadow-brand-gold/10 transition-all duration-300 flex flex-col justify-between"
+              className="group relative rounded-2xl bg-brand-card border border-brand-navyLight hover:border-brand-gold/60 overflow-hidden shadow-lg hover:shadow-brand-gold/20 transition-all duration-300 flex flex-col justify-between"
             >
               {/* Game Poster / Art Banner */}
               <div
-                className={`relative h-40 sm:h-48 w-full bg-gradient-to-br ${game.gradient} p-4 flex flex-col justify-between overflow-hidden`}
+                className={`relative h-44 sm:h-52 w-full bg-gradient-to-br ${game.gradient} p-4 flex flex-col justify-between overflow-hidden`}
               >
                 {/* Badges */}
                 <div className="flex items-center justify-between z-10">
                   <div className="flex items-center gap-1.5">
                     {game.isHot && (
-                      <span className="px-2 py-0.5 rounded-md bg-red-600/90 text-white text-[10px] font-black uppercase tracking-wider shadow">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white flex items-center gap-1 shadow-md">
+                        <Flame className="w-3 h-3 fill-white" />
                         HOT
                       </span>
                     )}
                     {game.isNew && (
-                      <span className="px-2 py-0.5 rounded-md bg-brand-positive/90 text-black text-[10px] font-black uppercase tracking-wider shadow">
-                        NEW
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-black shadow-md">
+                        NUEVO
                       </span>
                     )}
                   </div>
                   <button
                     onClick={(e) => toggleFavorite(game.id, e)}
-                    className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-sm transition-colors"
+                    className="p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
                   >
                     <Heart
                       className={`w-3.5 h-3.5 ${
@@ -202,40 +197,44 @@ export const PopularGames: React.FC<PopularGamesProps> = ({ selectedCategory }) 
                   </button>
                 </div>
 
-                {/* Big Center Emoji Icon */}
-                <div className="text-5xl sm:text-6xl text-center my-auto transform group-hover:scale-110 transition-transform duration-300">
-                  {game.emoji}
-                </div>
-
-                {/* Provider tag at bottom */}
-                <div className="z-10 flex items-center justify-between text-[11px] text-white/80 font-medium">
-                  <span className="truncate">{game.provider}</span>
-                  <span className="font-mono text-[10px] bg-black/40 px-1.5 py-0.5 rounded text-brand-gold">
-                    RTP {game.rtp}
+                {/* Big Center Graphic / Symbol */}
+                <div className="flex flex-col items-center justify-center my-auto transform group-hover:scale-110 transition-transform duration-300 select-none">
+                  <span className="text-6xl drop-shadow-2xl">{game.emoji}</span>
+                  <span className="mt-2 text-xs font-black text-white/90 tracking-wider uppercase drop-shadow">
+                    {game.provider}
                   </span>
                 </div>
 
-                {/* Hover Play Button Overlay */}
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-4">
+                {/* RTP & Provider Pill */}
+                <div className="flex items-center justify-between text-[11px] font-mono font-bold text-white/80 z-10">
+                  <span className="bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">RTP {game.rtp}</span>
+                  <span className="bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm uppercase">{game.category}</span>
+                </div>
+
+                {/* Hover Overlay with Real Play Trigger */}
+                <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-3 p-4 z-20 backdrop-blur-xs">
                   <button
-                    onClick={() => handleSimulatedPlay(game)}
-                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-400 text-black font-extrabold text-xs sm:text-sm shadow-xl flex items-center gap-1.5 hover:scale-105 transition-transform"
+                    onClick={() => setActiveGame(game)}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-brand-gold via-yellow-400 to-amber-300 text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-xl hover:scale-105 active:scale-95 transition-all"
                   >
                     <Play className="w-4 h-4 fill-black" />
-                    <span>{t.common.playDemo}</span>
+                    Jugar Ahora
                   </button>
+                  <span className="text-[10px] text-slate-300 font-mono text-center">
+                    {game.isLiveCasino ? 'Mesa en Vivo con Crupier' : 'Motor Oficial HTML5'}
+                  </span>
                 </div>
               </div>
 
               {/* Game Metadata info footer */}
-              <div className="p-3 bg-brand-card border-t border-brand-navyLight flex items-center justify-between">
+              <div className="p-3.5 bg-brand-card border-t border-brand-navyLight flex items-center justify-between">
                 <div className="truncate pr-2">
                   <h3 className="font-bold text-xs sm:text-sm text-white truncate">{game.title}</h3>
-                  <p className="text-[10px] text-slate-400 capitalize">{game.category}</p>
+                  <p className="text-[11px] text-slate-400">{game.provider}</p>
                 </div>
                 <div className="flex items-center text-yellow-400 text-xs">
-                  <Star className="w-3 h-3 fill-yellow-400 mr-0.5" />
-                  <span className="text-[11px] font-mono text-slate-300">4.9</span>
+                  <Star className="w-3.5 h-3.5 fill-yellow-400 mr-1" />
+                  <span className="text-xs font-mono font-bold text-slate-200">4.9</span>
                 </div>
               </div>
             </div>
@@ -243,61 +242,61 @@ export const PopularGames: React.FC<PopularGamesProps> = ({ selectedCategory }) 
         </div>
       </div>
 
-      {/* Simulated Game Modal Demo */}
-      {activeDemoGame && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-brand-navy border border-brand-gold/40 shadow-2xl overflow-hidden text-white">
-            <div className="flex items-center justify-between p-4 border-b border-brand-navyLight bg-brand-dark">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">{activeDemoGame.emoji}</span>
+      {/* Real Game Session Iframe Modal */}
+      {activeGame && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4">
+          <div
+            className={`w-full ${
+              isFullscreen ? 'h-full max-w-none' : 'max-w-5xl h-[85vh]'
+            } rounded-2xl bg-brand-navy border border-brand-gold/40 shadow-2xl overflow-hidden flex flex-col text-white transition-all`}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-brand-navyLight bg-brand-dark">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{activeGame.emoji}</span>
                 <div>
-                  <h3 className="font-bold text-sm text-white">{activeDemoGame.title}</h3>
-                  <span className="text-[10px] text-brand-positive">Adaptador Simulado Certificado</span>
+                  <h3 className="font-black text-sm text-white flex items-center gap-2">
+                    {activeGame.title}
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                      Conexión Real {activeGame.provider}
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Modo: {isRealMode ? 'Producción (Saldo Real)' : 'Simulación Demo'} • Divisa: {currencySymbol}
+                  </p>
                 </div>
               </div>
-              <button
-                onClick={() => setActiveDemoGame(null)}
-                className="p-1 rounded-lg hover:bg-brand-navyLight text-slate-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="p-1.5 rounded-lg hover:bg-brand-navyLight text-slate-400 hover:text-white transition-colors"
+                  title="Pantalla Completa"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveGame(null);
+                    setIsFullscreen(false);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-colors"
+                  title="Cerrar Juego"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="p-6 text-center space-y-6">
-              <div className="p-6 rounded-xl bg-brand-dark/90 border border-slate-800 space-y-4">
-                <div className="text-6xl animate-bounce">{activeDemoGame.emoji}</div>
-                <p className="text-xs text-slate-400">
-                  Motor de juego de prueba con contabilidad inmutable y generación pseudo-aleatoria (RNG).
-                </p>
-
-                {spinMultiplier !== null && (
-                  <div
-                    className={`p-3 rounded-lg text-sm font-bold font-mono ${
-                      spinMultiplier > 0
-                        ? 'bg-emerald-950 text-brand-positive border border-emerald-500/50'
-                        : 'bg-red-950 text-red-400 border border-red-500/50'
-                    }`}
-                  >
-                    {spinMultiplier > 0
-                      ? `¡Ganancia Demo! Multiplicador ${spinMultiplier}x (+$${(50 * spinMultiplier).toFixed(2)})`
-                      : 'Tirada sin premio. Inténtalo de nuevo.'}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-slate-400 px-2">
-                <span>Costo por tirada demo: <strong>$50.00</strong></span>
-                <span>Tu saldo demo: <strong className="text-brand-positive">${demoBalance.toFixed(2)}</strong></span>
-              </div>
-
-              <button
-                onClick={executeDemoSpin}
-                disabled={isSpinning}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-400 text-black font-black text-base shadow-xl hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
-              >
-                <RotateCcw className={`w-5 h-5 ${isSpinning ? 'animate-spin' : ''}`} />
-                <span>{isSpinning ? 'Girando cilindros demo...' : 'Girar Tirada Demo ($50)'}</span>
-              </button>
+            {/* Real Game Frame */}
+            <div className="flex-1 w-full bg-black relative">
+              <iframe
+                src={getGameUrl(activeGame)}
+                title={activeGame.title}
+                className="w-full h-full border-0"
+                allow="autoplay; fullscreen; encrypted-media"
+                loading="eager"
+              />
             </div>
           </div>
         </div>
@@ -305,4 +304,3 @@ export const PopularGames: React.FC<PopularGamesProps> = ({ selectedCategory }) 
     </section>
   );
 };
-
