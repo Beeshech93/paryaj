@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { SportsService } from './sports.service';
+import { TheOddsApiAdapter } from '../providers/adapters/the-odds-api.adapter';
 import { CreateBetSlipDto } from './dto/create-bet-slip.dto';
 import { SportsQueryDto } from './dto/sports-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -11,7 +12,21 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 @ApiTags('Sportsbook & Apuestas Deportivas')
 @Controller('sports')
 export class SportsController {
-  constructor(private readonly sportsService: SportsService) {}
+  constructor(
+    private readonly sportsService: SportsService,
+    private readonly oddsAdapter: TheOddsApiAdapter,
+  ) {}
+
+  @Get('feed/live')
+  @ApiOperation({
+    summary: 'Feed de eventos y cuotas reales en tiempo real (The Odds API)',
+    description: 'Obtiene partidos y cuotas en directo para México (Liga MX) y Haití (Championnat D1) directamente de las casas de apuestas reales.',
+  })
+  @ApiQuery({ name: 'market', required: false, enum: ['MX', 'HT'] })
+  @ApiQuery({ name: 'sport', required: false })
+  async getLiveFeed(@Query('market') market?: string, @Query('sport') sport?: string) {
+    return this.oddsAdapter.fetchFixtures(sport || 'soccer', market || 'MX');
+  }
 
   @Get()
   @ApiOperation({

@@ -15,6 +15,10 @@ import { SportradarFeedAdapter } from './adapters/sportradar-feed.adapter';
 import { SumsubKycAdapter } from './adapters/sumsub-kyc.adapter';
 import { GeoComplyAdapter } from './adapters/geocomply.adapter';
 
+import { PragmaticPlayRealAdapter } from './adapters/pragmatic-real.adapter';
+import { EvolutionGamingRealAdapter } from './adapters/evolution-real.adapter';
+import { TheOddsApiAdapter } from './adapters/the-odds-api.adapter';
+
 @Injectable()
 export class ProviderRegistryService {
   private readonly adapters = new Map<string, ICasinoProviderAdapter>();
@@ -24,6 +28,9 @@ export class ProviderRegistryService {
     private readonly internalRng: InternalRngAdapter,
     private readonly pragmaticMock: PragmaticMockAdapter,
     private readonly evolutionMock: EvolutionLiveMockAdapter,
+    readonly pragmaticReal: PragmaticPlayRealAdapter,
+    readonly evolutionReal: EvolutionGamingRealAdapter,
+    readonly theOddsApi: TheOddsApiAdapter,
     private readonly stpMexico: StpSpeiMexicoAdapter,
     private readonly moncashHaiti: MonCashHaitiAdapter,
     readonly sportsFeed: SportradarFeedAdapter,
@@ -33,6 +40,7 @@ export class ProviderRegistryService {
     this.register(this.internalRng);
     this.register(this.pragmaticMock);
     this.register(this.evolutionMock);
+    this.register(this.pragmaticReal);
 
     this.paymentAdapters.set(this.stpMexico.providerCode, this.stpMexico);
     this.paymentAdapters.set(this.moncashHaiti.providerCode, this.moncashHaiti);
