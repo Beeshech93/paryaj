@@ -28,6 +28,10 @@ interface AppContextType {
   demoBalance: number;
   updateDemoBalance: (delta: number) => boolean;
   resetDemoBalance: () => void;
+  isRealMode: boolean;
+  setIsRealMode: (real: boolean) => void;
+  realBalance: number;
+  updateRealBalance: (delta: number) => boolean;
   betSelections: BetSelection[];
   addBetSelection: (bet: BetSelection) => void;
   removeBetSelection: (id: string) => void;
@@ -52,6 +56,8 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('es');
   const [market, setMarketState] = useState<Market>('MX');
+  const [isRealMode, setIsRealModeState] = useState<boolean>(true);
+  const [realBalance, setRealBalance] = useState<number>(2500.0);
   const [demoBalance, setDemoBalance] = useState<number>(10000.0);
   const [betSelections, setBetSelections] = useState<BetSelection[]>([]);
   const [isBetSlipOpen, setIsBetSlipOpen] = useState<boolean>(false);
@@ -75,6 +81,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const savedBalance = localStorage.getItem('nb_demo_balance');
       if (savedBalance) {
         setDemoBalance(parseFloat(savedBalance));
+      }
+      const savedRealBal = localStorage.getItem('nb_real_balance');
+      if (savedRealBal) {
+        setRealBalance(parseFloat(savedRealBal));
+      }
+      const savedMode = localStorage.getItem('nb_operating_mode');
+      if (savedMode) {
+        setIsRealModeState(savedMode === 'real');
       }
       const savedUser = localStorage.getItem('nb_user');
       if (savedUser) {
@@ -120,6 +134,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem('nb_demo_balance', '10000');
     } catch {}
+  };
+
+  const setIsRealMode = (real: boolean) => {
+    setIsRealModeState(real);
+    try {
+      localStorage.setItem('nb_operating_mode', real ? 'real' : 'demo');
+    } catch {}
+  };
+
+  const updateRealBalance = (delta: number): boolean => {
+    if (realBalance + delta < 0) return false;
+    const newBal = Math.round((realBalance + delta) * 100) / 100;
+    setRealBalance(newBal);
+    try {
+      localStorage.setItem('nb_real_balance', newBal.toString());
+    } catch {}
+    return true;
   };
 
   const addBetSelection = (bet: BetSelection) => {
@@ -191,6 +222,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         demoBalance,
         updateDemoBalance,
         resetDemoBalance,
+        isRealMode,
+        setIsRealMode,
+        realBalance,
+        updateRealBalance,
         betSelections,
         addBetSelection,
         removeBetSelection,

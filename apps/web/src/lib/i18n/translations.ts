@@ -5,9 +5,14 @@ export interface Translations {
   common: {
     demoBadge: string;
     realMoneyDisabled: string;
+    prodBadge: string;
+    prodMessage: string;
     login: string;
     register: string;
     demoBalance: string;
+    realBalance: string;
+    switchToProd: string;
+    switchToDemo: string;
     playDemo: string;
     viewOdds: string;
     popular: string;
@@ -117,9 +122,14 @@ export const translations: Record<Locale, Translations> = {
     common: {
       demoBadge: 'MODO DEMO',
       realMoneyDisabled: 'Dinero real deshabilitado por regulación',
+      prodBadge: '🟢 PRODUCCIÓN',
+      prodMessage: 'Ambiente en Producción — Licencia Activa SEGOB (MX) / LEH (HT)',
       login: 'Iniciar Sesión',
       register: 'Registrarse',
       demoBalance: 'Saldo Demo',
+      realBalance: 'Saldo Real',
+      switchToProd: 'Modo Producción',
+      switchToDemo: 'Modo Demo',
       playDemo: 'Jugar Demo',
       viewOdds: 'Ver Cuotas',
       popular: 'Popular',
@@ -229,9 +239,14 @@ export const translations: Record<Locale, Translations> = {
     common: {
       demoBadge: 'MODE DÉMO',
       realMoneyDisabled: "Argent réel désactivé par conformité légale",
+      prodBadge: '🟢 EN PRODUCTION',
+      prodMessage: 'Environnement de Production — Licence Active LEH (HT) / SEGOB (MX)',
       login: 'Connexion',
       register: "S'inscrire",
       demoBalance: 'Solde Démo',
+      realBalance: 'Solde Réel',
+      switchToProd: 'Mode Production',
+      switchToDemo: 'Mode Démo',
       playDemo: 'Jouer en Démo',
       viewOdds: 'Voir les Cotes',
       popular: 'Populaire',
