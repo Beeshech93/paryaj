@@ -80,41 +80,44 @@ export const PromoCardsGrid: React.FC = () => {
             </div>
           </Link>
 
-          {/* Card 3: PRUEBA TU SUERTE (Dark Blue / Live Casino Roulette & Dice) */}
+          {/* Card 3: KENO & LUCKY (Emerald & Amber / Ball Drop & Live Lottery) */}
           <Link
-            href="#live-casino"
-            className="group relative h-48 sm:h-52 rounded-2xl overflow-hidden bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#020617] p-5 flex flex-col justify-between shadow-xl border border-amber-500/30 hover:border-amber-300 transition-all hover:scale-[1.02]"
+            href="#casino"
+            className="group relative h-48 sm:h-52 rounded-2xl overflow-hidden bg-gradient-to-br from-[#064e3b] via-[#0f172a] to-[#020617] p-5 flex flex-col justify-between shadow-xl border border-emerald-500/40 hover:border-emerald-300 transition-all hover:scale-[1.02]"
           >
             {/* Background Glow */}
-            <div className="absolute top-0 right-0 w-44 h-44 bg-[radial-gradient(circle_at_top_right,#fbbf24,transparent_60%)] opacity-20 pointer-events-none" />
-            <div className="absolute -right-4 -bottom-6 w-44 h-44 opacity-25 flex items-center justify-center text-7xl select-none group-hover:scale-110 transition-transform">
-              🎡
+            <div className="absolute top-0 right-0 w-44 h-44 bg-[radial-gradient(circle_at_top_right,#10b981,transparent_60%)] opacity-25 pointer-events-none" />
+            <div className="absolute -right-4 -bottom-6 w-44 h-44 opacity-30 flex items-center justify-center text-7xl select-none group-hover:scale-110 transition-transform">
+              🎱
             </div>
 
             {/* Content */}
             <div className="relative z-10 space-y-1">
+              <span className="text-[10px] font-black tracking-widest text-emerald-300 uppercase bg-black/40 px-2 py-0.5 rounded-full inline-block border border-emerald-500/30">
+                NUEVOS JUEGOS EN VIVO
+              </span>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-2xl sm:text-3xl font-black text-white leading-none uppercase">
-                  PRUEBA
+                  KENO
                 </h3>
-                <span className="text-xl sm:text-2xl italic font-serif text-amber-300 font-bold">
-                  Tu suerte
+                <span className="text-xl sm:text-2xl italic font-serif text-[#10b981] font-bold">
+                  &amp; Lucky
                 </span>
               </div>
               <p className="text-xs text-slate-300 font-medium">
-                y gana grandes premios en mesas en vivo
+                Sorteos de esferas y loterías en directo cada 3 minutos
               </p>
             </div>
 
             <div className="relative z-10 flex items-center justify-between text-xs font-bold text-slate-200">
-              <div className="flex items-center gap-1.5 text-amber-300">
-                <span>🎲 Dados</span>
+              <div className="flex items-center gap-1.5 text-emerald-400">
+                <span>🎱 Keno 80</span>
                 <span>•</span>
-                <span>🃏 Blackjack</span>
+                <span>🍀 Lucky 7</span>
                 <span>•</span>
-                <span>🎡 Ruleta</span>
+                <span>🎡 Lucky Wheel</span>
               </div>
-              <span className="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center group-hover:bg-amber-400 group-hover:text-black transition-colors">
+              <span className="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center group-hover:bg-[#10b981] group-hover:text-black transition-colors">
                 <ArrowRight className="w-4 h-4" />
               </span>
             </div>

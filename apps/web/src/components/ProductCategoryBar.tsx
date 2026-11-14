@@ -28,6 +28,22 @@ export const ProductCategoryBar: React.FC = () => {
       isLive: true,
     },
     {
+      id: 'keno',
+      label: 'KENO 80',
+      href: '#casino',
+      icon: (
+        <span className="text-xl">🎱</span>
+      ),
+    },
+    {
+      id: 'lucky',
+      label: 'LUCKY 7',
+      href: '#casino',
+      icon: (
+        <span className="text-xl">🍀</span>
+      ),
+    },
+    {
       id: 'casino-en-vivo',
       label: 'CASINO EN VIVO',
       href: '#live-casino',
@@ -80,7 +96,7 @@ export const ProductCategoryBar: React.FC = () => {
   return (
     <div className="w-full bg-[#10171d] border-b border-[#1b2631] py-3 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-4 md:grid-cols-8 gap-2 sm:gap-3">
+        <div className="grid grid-cols-5 md:grid-cols-10 gap-1.5 sm:gap-2.5">
           {categories.map((cat) => (
             <a
               key={cat.id}

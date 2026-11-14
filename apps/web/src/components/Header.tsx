@@ -63,13 +63,14 @@ export const Header: React.FC = () => {
   const menuItems = [
     { id: 'deportes', label: 'DEPORTES', href: '#sportsbook' },
     { id: 'en-vivo', label: 'EN VIVO', href: '#featured-events', isLive: true },
-    { id: 'esports', label: 'E-SPORTS', href: '#esports' },
+    { id: 'keno', label: 'KENO 80', href: '#casino', isNew: true },
+    { id: 'lucky', label: 'LUCKY 7', href: '#casino', isHot: true },
     { id: 'tragamonedas', label: 'TRAGAMONEDAS', href: '#casino' },
     { id: 'casino-en-vivo', label: 'CASINO EN VIVO', href: '#live-casino' },
-    { id: 'juegos-tv', label: 'JUEGOS TV', href: '#fast-games' },
+    { id: 'esports', label: 'E-SPORTS', href: '#esports' },
     { id: 'deportes-virtuales', label: 'DEPORTES VIRTUALES', href: '#virtuals' },
     { id: 'fast-games', label: 'FAST GAMES', href: '#fast-games' },
-    { id: 'blackjack', label: 'BLACKJACK', href: '#casino', isNew: true },
+    { id: 'blackjack', label: 'BLACKJACK', href: '#casino' },
   ];
 
   return (
