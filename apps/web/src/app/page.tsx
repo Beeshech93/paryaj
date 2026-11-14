@@ -6,7 +6,7 @@ import { Header } from '@/components/Header';
 import { HeroBanner } from '@/components/HeroBanner';
 import { ProductCategoryBar } from '@/components/ProductCategoryBar';
 import { PromoCardsGrid } from '@/components/PromoCardsGrid';
-import { SportsbookArena } from '@/components/SportsbookArena';
+import { SportTreeArena } from '@/components/SportTreeArena';
 import { CasinoCategories } from '@/components/CasinoCategories';
 import { PopularGames } from '@/components/PopularGames';
 import { SportsSection } from '@/components/SportsSection';
@@ -37,8 +37,8 @@ function MainPlatform() {
         {/* 4. Parrilla de 3 banners promocionales (Juegos Virtuales, E-Sports, Prueba tu Suerte) */}
         <PromoCardsGrid />
 
-        {/* 5. Sportsbook Arena con Cuotas Reales en Vivo y Calculadora */}
-        <SportsbookArena />
+        {/* 5. Sportsbook Tree Navigation (Estilo Apuestapam / Paryajpam) */}
+        <SportTreeArena />
 
         {/* 6. Casino: Categorías y Juegos Populares */}
         <CasinoCategories

@@ -493,3 +493,4 @@ export const GamePosterCard: React.FC<GamePosterCardProps> = ({
     </div>
   );
 };
+
