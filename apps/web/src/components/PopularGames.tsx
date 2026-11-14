@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useApp } from '@/lib/i18n/context';
 import { Play, Heart, Star, Sparkles, X, Maximize2, ShieldCheck, Flame } from 'lucide-react';
+import { KenoGameEngine } from '@/components/games/KenoGameEngine';
+import { LuckyGameEngine } from '@/components/games/LuckyGameEngine';
 
 interface GameItem {
   id: string;
@@ -106,6 +108,96 @@ const realGames: GameItem[] = [
     isLiveCasino: true,
     gradient: 'from-red-800 via-rose-900 to-slate-950',
     emoji: '🎴',
+  },
+  // --- KENO GAMES ---
+  {
+    id: 'keno-1',
+    title: 'Keno Live VIP',
+    symbol: 'keno_live_vip',
+    category: 'keno',
+    provider: 'Paryaj Milyon Live',
+    rtp: '96.80%',
+    isHot: true,
+    gradient: 'from-emerald-700 via-teal-800 to-slate-900',
+    emoji: '🎱',
+  },
+  {
+    id: 'keno-2',
+    title: 'Turbo Keno 80',
+    symbol: 'turbo_keno_80',
+    category: 'keno',
+    provider: 'Provably Fair RNG',
+    rtp: '97.20%',
+    isHot: true,
+    isNew: true,
+    gradient: 'from-blue-700 via-indigo-900 to-slate-950',
+    emoji: '🔢',
+  },
+  {
+    id: 'keno-3',
+    title: 'Super Keno Deluxe',
+    symbol: 'super_keno_deluxe',
+    category: 'keno',
+    provider: 'Paryaj Milyon Studios',
+    rtp: '96.50%',
+    gradient: 'from-cyan-700 via-sky-800 to-slate-950',
+    emoji: '🔮',
+  },
+  {
+    id: 'keno-4',
+    title: 'Keno Caraïbes Express',
+    symbol: 'keno_caraibes',
+    category: 'keno',
+    provider: 'Loterie Nationale',
+    rtp: '96.00%',
+    isNew: true,
+    gradient: 'from-teal-700 via-emerald-800 to-slate-950',
+    emoji: '🎯',
+  },
+  // --- LUCKY GAMES ---
+  {
+    id: 'lucky-1',
+    title: 'Lucky 7 Live Draw',
+    symbol: 'lucky_7',
+    category: 'lucky',
+    provider: 'BetGames.TV',
+    rtp: '95.80%',
+    isHot: true,
+    gradient: 'from-rose-700 via-red-800 to-slate-950',
+    emoji: '7️⃣',
+  },
+  {
+    id: 'lucky-2',
+    title: 'Lucky 5 Instant',
+    symbol: 'lucky_5',
+    category: 'lucky',
+    provider: 'BetGames.TV',
+    rtp: '96.20%',
+    isHot: true,
+    gradient: 'from-amber-600 via-orange-700 to-stone-950',
+    emoji: '🎲',
+  },
+  {
+    id: 'lucky-3',
+    title: 'Lucky 6 Lottery',
+    symbol: 'lucky_6',
+    category: 'lucky',
+    provider: 'Paryaj Milyon Live',
+    rtp: '96.00%',
+    gradient: 'from-purple-700 via-fuchsia-800 to-slate-950',
+    emoji: '🎰',
+  },
+  {
+    id: 'lucky-4',
+    title: 'Lucky Wheel VIP',
+    symbol: 'lucky_wheel',
+    category: 'lucky',
+    provider: 'Provably Fair RNG',
+    rtp: '97.50%',
+    isNew: true,
+    isHot: true,
+    gradient: 'from-yellow-600 via-amber-600 to-zinc-950',
+    emoji: '🍀',
   },
 ];
 
@@ -221,7 +313,13 @@ export const PopularGames: React.FC<PopularGamesProps> = ({ selectedCategory }) 
                     Jugar Ahora
                   </button>
                   <span className="text-[10px] text-slate-300 font-mono text-center">
-                    {game.isLiveCasino ? 'Mesa en Vivo con Crupier' : 'Motor Oficial HTML5'}
+                    {game.category === 'keno'
+                      ? 'Sorteo Keno 80 Bolas'
+                      : game.category === 'lucky'
+                      ? 'Lotería en Vivo 7/42'
+                      : game.isLiveCasino
+                      ? 'Mesa en Vivo con Crupier'
+                      : 'Motor Oficial HTML5'}
                   </span>
                 </div>
               </div>
@@ -258,7 +356,9 @@ export const PopularGames: React.FC<PopularGamesProps> = ({ selectedCategory }) 
                   <h3 className="font-black text-sm text-white flex items-center gap-2">
                     {activeGame.title}
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                      Conexión Real {activeGame.provider}
+                      {activeGame.category === 'keno' || activeGame.category === 'lucky'
+                        ? 'Juego Interactivo Oficial'
+                        : `Conexión Real ${activeGame.provider}`}
                     </span>
                   </h3>
                   <p className="text-[11px] text-slate-400">
@@ -290,13 +390,32 @@ export const PopularGames: React.FC<PopularGamesProps> = ({ selectedCategory }) 
 
             {/* Real Game Frame */}
             <div className="flex-1 w-full bg-black relative">
-              <iframe
-                src={getGameUrl(activeGame)}
-                title={activeGame.title}
-                className="w-full h-full border-0"
-                allow="autoplay; fullscreen; encrypted-media"
-                loading="eager"
-              />
+              {activeGame.category === 'keno' ? (
+                <KenoGameEngine
+                  gameTitle={activeGame.title}
+                  onClose={() => {
+                    setActiveGame(null);
+                    setIsFullscreen(false);
+                  }}
+                />
+              ) : activeGame.category === 'lucky' ? (
+                <LuckyGameEngine
+                  gameTitle={activeGame.title}
+                  gameSymbol={activeGame.symbol}
+                  onClose={() => {
+                    setActiveGame(null);
+                    setIsFullscreen(false);
+                  }}
+                />
+              ) : (
+                <iframe
+                  src={getGameUrl(activeGame)}
+                  title={activeGame.title}
+                  className="w-full h-full border-0"
+                  allow="autoplay; fullscreen; encrypted-media"
+                  loading="eager"
+                />
+              )}
             </div>
           </div>
         </div>

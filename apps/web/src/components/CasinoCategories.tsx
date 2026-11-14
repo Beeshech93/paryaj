@@ -16,8 +16,10 @@ export const CasinoCategories: React.FC<CasinoCategoriesProps> = ({
   const { t } = useApp();
 
   const categories = [
-    { id: 'all', name: t.casino.all, icon: Layers, count: 48 },
-    { id: 'popular', name: t.common.popular, icon: Flame, count: 12 },
+    { id: 'all', name: t.casino.all, icon: Layers, count: 56 },
+    { id: 'popular', name: t.common.popular, icon: Flame, count: 16 },
+    { id: 'keno', name: 'Keno', icon: CircleDot, count: 4 },
+    { id: 'lucky', name: 'Lucky', icon: Sparkles, count: 4 },
     { id: 'slots', name: t.casino.slots, icon: Dices, count: 24 },
     { id: 'crash', name: t.casino.crash, icon: Zap, count: 6 },
     { id: 'roulette', name: t.casino.roulette, icon: CircleDot, count: 8 },
