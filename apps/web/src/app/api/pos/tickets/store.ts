@@ -40,3 +40,4 @@ export function markTicketPaid(code: string): StoredTicket | undefined {
   }
   return ticket;
 }
+
