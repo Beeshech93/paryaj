@@ -55,19 +55,42 @@ function formatStartTime(isoString?: string, fallbackStatus?: string): string {
   }
 }
 
-const LEAGUES_CONFIG = [
+// In-Memory Cache to respect the amateur tier (10 req/min)
+let memoryCache: { timestamp: number; events: FormattedEvent[] } | null = null;
+const CACHE_TTL_MS = 45 * 1000; // 45 seconds cache
+
+const PRIORITY_LEAGUES = [
   { id: 'NBA', sport: 'basketball' as const, label: '🏀 NBA (Basketball)', limit: 8 },
-  { id: 'NCAAB', sport: 'basketball' as const, label: '🎓 NCAA Basketball', limit: 6 },
   { id: 'NHL', sport: 'hockey' as const, label: '🏒 NHL (Hockey)', limit: 6 },
-  { id: 'NFL', sport: 'football' as const, label: '🏈 NFL (Fútbol Americano)', limit: 6 },
   { id: 'UEFA_CHAMPIONS_LEAGUE', sport: 'soccer' as const, label: '⚽ UEFA Champions League', limit: 8 },
-  { id: 'MLS', sport: 'soccer' as const, label: '⚽ MLS (Soccer)', limit: 6 },
+  { id: 'NFL', sport: 'football' as const, label: '🏈 NFL (Fútbol Americano)', limit: 6 },
 ];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const market = searchParams.get('market') || 'MX';
-  const requestedSport = searchParams.get('sport'); // optional filter: basketball, soccer, etc.
+  const requestedSport = searchParams.get('sport');
+  const now = Date.now();
+
+  // Return cached feed if still fresh
+  if (memoryCache && now - memoryCache.timestamp < CACHE_TTL_MS && memoryCache.events.length > 0) {
+    const filteredEvents = requestedSport
+      ? memoryCache.events.filter((e) => e.sport === requestedSport)
+      : memoryCache.events;
+
+    return NextResponse.json({
+      status: 'ok',
+      provider: 'SPORTSGAMEODDS_V2_LIVE_CACHED',
+      apiKeyConfigured: true,
+      cached: true,
+      cacheAgeSeconds: Math.round((now - memoryCache.timestamp) / 1000),
+      market,
+      timestamp: new Date().toISOString(),
+      count: filteredEvents.length,
+      events: filteredEvents,
+    });
+  }
+
   const apiKey =
     process.env.SPORTSGAMEODDS_API_KEY ||
     process.env.NEXT_PUBLIC_SPORTSGAMEODDS_API_KEY ||
@@ -76,9 +99,9 @@ export async function GET(request: Request) {
   const events: FormattedEvent[] = [];
   let providerSource = 'SPORTSGAMEODDS_V2_MULTI_LEAGUE';
 
-  // 1. Fetch Real Data from SportsGameOdds across all active leagues
+  // 1. Fetch Real Data from SportsGameOdds (sequential with small pauses to avoid 429)
   if (apiKey) {
-    const fetchPromises = LEAGUES_CONFIG.map(async (cfg) => {
+    for (const cfg of PRIORITY_LEAGUES) {
       try {
         const url = `https://api.sportsgameodds.com/v2/events/?leagueID=${cfg.id}&oddsAvailable=true&limit=${cfg.limit}`;
         const res = await fetch(url, {
@@ -86,102 +109,90 @@ export async function GET(request: Request) {
             'x-api-key': apiKey,
             'Accept': 'application/json',
           },
-          cache: 'no-store',
+          next: { revalidate: 60 },
         });
 
-        if (!res.ok) {
-          console.warn(`SportsGameOdds league ${cfg.id} returned status ${res.status}`);
-          return [];
+        if (res.status === 429) {
+          console.warn(`SportsGameOdds league ${cfg.id} hit rate-limit (429)`);
+          continue;
         }
 
-        const data = await res.json();
-        const items = data.data || [];
-        if (!Array.isArray(items)) return [];
+        if (res.ok) {
+          const data = await res.json();
+          const items = data.data || [];
 
-        const parsed: FormattedEvent[] = [];
+          if (Array.isArray(items)) {
+            for (const ev of items) {
+              const homeName =
+                ev.teams?.home?.names?.long ||
+                ev.teams?.home?.names?.medium ||
+                ev.teams?.home?.names?.short ||
+                'Local';
+              const awayName =
+                ev.teams?.away?.names?.long ||
+                ev.teams?.away?.names?.medium ||
+                ev.teams?.away?.names?.short ||
+                'Visita';
 
-        for (const ev of items) {
-          const homeName =
-            ev.teams?.home?.names?.long ||
-            ev.teams?.home?.names?.medium ||
-            ev.teams?.home?.names?.short ||
-            'Local';
-          const awayName =
-            ev.teams?.away?.names?.long ||
-            ev.teams?.away?.names?.medium ||
-            ev.teams?.away?.names?.short ||
-            'Visita';
+              const isLive = Boolean(ev.status?.live);
+              const displayStatus = ev.status?.displayLong || ev.status?.displayShort;
 
-          const isLive = Boolean(ev.status?.live);
-          const isCompleted = Boolean(ev.status?.completed);
-          const displayStatus = ev.status?.displayLong || ev.status?.displayShort;
+              const homePts = ev.results?.points?.home ?? ev.results?.home;
+              const awayPts = ev.results?.points?.away ?? ev.results?.away;
+              const score =
+                homePts !== undefined && awayPts !== undefined ? `${homePts} - ${awayPts}` : undefined;
 
-          // Scores if available
-          const homePts = ev.results?.points?.home ?? ev.results?.home;
-          const awayPts = ev.results?.points?.away ?? ev.results?.away;
-          const score =
-            homePts !== undefined && awayPts !== undefined ? `${homePts} - ${awayPts}` : undefined;
+              const homeML =
+                ev.odds?.['points-home-game-ml-home']?.bookOdds ||
+                ev.odds?.['points-home-reg-ml3way-home']?.bookOdds;
+              const awayML =
+                ev.odds?.['points-away-game-ml-away']?.bookOdds ||
+                ev.odds?.['points-away-reg-ml3way-away']?.bookOdds;
+              const drawML = ev.odds?.['points-all-reg-ml3way-draw']?.bookOdds;
 
-          // Moneyline & 3-Way odds extraction
-          const homeML =
-            ev.odds?.['points-home-game-ml-home']?.bookOdds ||
-            ev.odds?.['points-home-reg-ml3way-home']?.bookOdds;
-          const awayML =
-            ev.odds?.['points-away-game-ml-away']?.bookOdds ||
-            ev.odds?.['points-away-reg-ml3way-away']?.bookOdds;
-          const drawML = ev.odds?.['points-all-reg-ml3way-draw']?.bookOdds;
+              const odds1 = americanToDecimal(homeML, 1.90);
+              const odds2 = americanToDecimal(awayML, 1.90);
 
-          const odds1 = americanToDecimal(homeML, 1.90);
-          const odds2 = americanToDecimal(awayML, 1.90);
+              const hasDraw = Boolean(drawML) && cfg.sport === 'soccer';
+              const oddsX = drawML ? americanToDecimal(drawML, 3.40) : 0;
 
-          const hasDraw = Boolean(drawML) && cfg.sport === 'soccer';
-          const oddsX = drawML ? americanToDecimal(drawML, 3.40) : 0;
-
-          parsed.push({
-            id: `sgo:${cfg.id}:${ev.eventID}`,
-            name: `${homeName} vs ${awayName}`,
-            league: cfg.label,
-            sport: cfg.sport,
-            sportLabel: cfg.label,
-            isLive,
-            minute: isLive ? displayStatus || 'LIVE' : undefined,
-            score,
-            time: isLive ? displayStatus : formatStartTime(ev.status?.startsAt, displayStatus),
-            homeTeam: homeName,
-            awayTeam: awayName,
-            odds1,
-            oddsX,
-            odds2,
-            hasDraw,
-            oddDetails: {
-              marketId: hasDraw ? 'points-all-reg-ml3way-draw' : 'points-home-game-ml-home',
-              bookmaker: 'Consensus / SportsGameOdds Real Feed',
-              source: 'api.sportsgameodds.com',
-              updatedAt: ev.status?.startsAt,
-            },
-          });
+              events.push({
+                id: `sgo:${cfg.id}:${ev.eventID}`,
+                name: `${homeName} vs ${awayName}`,
+                league: cfg.label,
+                sport: cfg.sport,
+                sportLabel: cfg.label,
+                isLive,
+                minute: isLive ? displayStatus || 'LIVE' : undefined,
+                score,
+                time: isLive ? displayStatus : formatStartTime(ev.status?.startsAt, displayStatus),
+                homeTeam: homeName,
+                awayTeam: awayName,
+                odds1,
+                oddsX,
+                odds2,
+                hasDraw,
+                oddDetails: {
+                  marketId: hasDraw ? 'points-all-reg-ml3way-draw' : 'points-home-game-ml-home',
+                  bookmaker: 'Consensus / SportsGameOdds Real Feed',
+                  source: 'api.sportsgameodds.com',
+                  updatedAt: ev.status?.startsAt,
+                },
+              });
+            }
+          }
         }
-
-        return parsed;
       } catch (err) {
         console.warn(`Error fetching league ${cfg.id}:`, err);
-        return [];
-      }
-    });
-
-    const leagueResults = await Promise.allSettled(fetchPromises);
-    for (const r of leagueResults) {
-      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-        events.push(...r.value);
       }
     }
   }
 
-  // 2. Fetch Real Liga MX from ESPN API Scoreboard (Real games only)
+  // 2. Fetch Real Liga MX from ESPN Scoreboard
   try {
     const espnMxRes = await fetch(
       'https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/scoreboard',
-      { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' },
+      { headers: { 'User-Agent': 'Mozilla/5.0' }, next: { revalidate: 60 } },
     );
     if (espnMxRes.ok) {
       const mxData = await espnMxRes.json();
@@ -243,7 +254,17 @@ export async function GET(request: Request) {
     return 0;
   });
 
-  // Filter by sport if requested
+  // If we retrieved events, update memory cache
+  if (events.length > 0) {
+    memoryCache = {
+      timestamp: now,
+      events,
+    };
+  } else if (memoryCache) {
+    // If rate limited, fall back to last good cache
+    events.push(...memoryCache.events);
+  }
+
   const filteredEvents = requestedSport
     ? events.filter((e) => e.sport === requestedSport)
     : events;
