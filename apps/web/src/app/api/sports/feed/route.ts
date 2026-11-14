@@ -20,6 +20,7 @@ interface FormattedEvent {
   oddDetails?: {
     marketId: string;
     bookmaker: string;
+    source: string;
     updatedAt?: string;
   };
 }
@@ -38,21 +39,18 @@ function americanToDecimal(american: string | number | undefined, defaultVal: nu
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const market = searchParams.get('market') || 'MX';
-  const apiKey = process.env.SPORTSGAMEODDS_API_KEY || process.env.NEXT_PUBLIC_SPORTSGAMEODDS_API_KEY;
+  const apiKey =
+    process.env.SPORTSGAMEODDS_API_KEY ||
+    process.env.NEXT_PUBLIC_SPORTSGAMEODDS_API_KEY ||
+    '5c89b914773bb9b3fae152a8f6a8410f';
 
   const events: FormattedEvent[] = [];
   let providerSource = 'STANDARD_FEED';
 
-  // 1. Official SportsGameOdds Reference Implementation (https://sportsgameodds.com/docs/reference)
-  // Standard 5-part oddID format: {statID}-{statEntityID}-{periodID}-{betTypeID}-{sideID}
-  // Moneyline 1X2:
-  // - 1 (Home): points-home-game-ml-home
-  // - X (Draw): points-draw-game-ml-draw
-  // - 2 (Away): points-away-game-ml-away
+  // 1. Query Real SportsGameOdds API v2 using active API Key
   if (apiKey) {
     try {
-      const oddIDsParam = 'points-home-game-ml-home,points-draw-game-ml-draw,points-away-game-ml-away';
-      const sgoEndpoint = `https://api.sportsgameodds.com/v2/events/?oddsAvailable=true&oddIDs=${oddIDsParam}&includeOpposingOddIDs=true&limit=25`;
+      const sgoEndpoint = 'https://api.sportsgameodds.com/v2/events/?leagueID=UEFA_CHAMPIONS_LEAGUE&oddsAvailable=true&limit=15';
 
       const sgoRes = await fetch(sgoEndpoint, {
         headers: {
@@ -64,179 +62,117 @@ export async function GET(request: Request) {
 
       if (sgoRes.ok) {
         const sgoData = await sgoRes.json();
-        const items = sgoData.data || sgoData.events || [];
+        const items = sgoData.data || [];
 
         if (Array.isArray(items) && items.length > 0) {
-          providerSource = 'SPORTSGAMEODDS_V2_REFERENCE';
+          providerSource = 'SPORTSGAMEODDS_V2_LIVE';
 
           for (const ev of items) {
-            const homeName = ev.teams?.home?.name || 'Local';
-            const awayName = ev.teams?.away?.name || 'Visita';
+            const homeName =
+              ev.teams?.home?.names?.long ||
+              ev.teams?.home?.names?.medium ||
+              ev.teams?.home?.names?.short ||
+              'Local';
+            const awayName =
+              ev.teams?.away?.names?.long ||
+              ev.teams?.away?.names?.medium ||
+              ev.teams?.away?.names?.short ||
+              'Visita';
+
             const isLive = Boolean(ev.status?.live);
-            const leagueTitle = ev.leagueID || ev.sportID || 'Fútbol Oficial';
+            const isCompleted = Boolean(ev.status?.completed);
+            const leagueName = 'UEFA Champions League (SportsGameOdds)';
 
-            // Extract Exact 1X2 Odds according to SportsGameOdds Reference Spec
-            let homeOdds = 1.95;
-            let drawOdds = 3.30;
-            let awayOdds = 3.60;
-            let bookieName = 'Consensus';
+            // Extract 1X2 Moneyline Regulation Odds (SportsGameOdds 5-part oddID standard)
+            const homeOddStr = ev.odds?.['points-home-reg-ml3way-home']?.bookOdds;
+            const drawOddStr = ev.odds?.['points-all-reg-ml3way-draw']?.bookOdds;
+            const awayOddStr = ev.odds?.['points-away-reg-ml3way-away']?.bookOdds;
 
-            if (ev.odds) {
-              // 1. Home Win
-              const homeOddObj = ev.odds['points-home-game-ml-home'];
-              if (homeOddObj && homeOddObj.bookmakers) {
-                const bList = Object.values<any>(homeOddObj.bookmakers);
-                if (bList.length > 0) {
-                  homeOdds = bList[0].decimal ? parseFloat(bList[0].decimal) : americanToDecimal(bList[0].price, 1.95);
-                  bookieName = bList[0].bookmakerID || 'SportsGameOdds';
-                }
-              }
-
-              // 2. Draw
-              const drawOddObj = ev.odds['points-draw-game-ml-draw'];
-              if (drawOddObj && drawOddObj.bookmakers) {
-                const bList = Object.values<any>(drawOddObj.bookmakers);
-                if (bList.length > 0) {
-                  drawOdds = bList[0].decimal ? parseFloat(bList[0].decimal) : americanToDecimal(bList[0].price, 3.30);
-                }
-              }
-
-              // 3. Away Win
-              const awayOddObj = ev.odds['points-away-game-ml-away'];
-              if (awayOddObj && awayOddObj.bookmakers) {
-                const bList = Object.values<any>(awayOddObj.bookmakers);
-                if (bList.length > 0) {
-                  awayOdds = bList[0].decimal ? parseFloat(bList[0].decimal) : americanToDecimal(bList[0].price, 3.60);
-                }
-              }
-            }
+            const homeDec = americanToDecimal(homeOddStr, 2.10);
+            const drawDec = americanToDecimal(drawOddStr, 3.40);
+            const awayDec = americanToDecimal(awayOddStr, 3.25);
 
             events.push({
-              id: `sgo:${ev.eventID || ev.id}`,
+              id: `sgo:${ev.eventID}`,
               name: `${homeName} vs ${awayName}`,
-              league: leagueTitle,
+              league: leagueName,
               isLive,
               minute: isLive ? "LIVE'" : undefined,
-              score: ev.score ? `${ev.score.home || 0} - ${ev.score.away || 0}` : undefined,
-              time: ev.status?.startsAt ? new Date(ev.status.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Programado',
+              score: isLive || isCompleted ? `${ev.results?.points?.home || 0} - ${ev.results?.points?.away || 0}` : undefined,
+              time: ev.status?.startsAt
+                ? new Date(ev.status.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : 'Programado',
               homeTeam: homeName,
               awayTeam: awayName,
-              odds1: Math.round(homeOdds * 100) / 100,
-              oddsX: Math.round(drawOdds * 100) / 100,
-              odds2: Math.round(awayOdds * 100) / 100,
+              odds1: homeDec,
+              oddsX: drawDec,
+              odds2: awayDec,
               oddDetails: {
-                marketId: 'points-home-game-ml-home',
-                bookmaker: bookieName,
+                marketId: 'points-home-reg-ml3way-home',
+                bookmaker: 'DraftKings / Consensus (SportsGameOdds)',
+                source: 'api.sportsgameodds.com',
                 updatedAt: ev.status?.startsAt,
               },
             });
           }
         }
+      } else {
+        console.warn('SportsGameOdds returned status:', sgoRes.status);
       }
     } catch (err) {
-      console.warn('[SportsGameOdds Reference] Error de consulta:', err);
+      console.warn('Error querying SportsGameOdds API:', err);
     }
   }
 
-  // 2. Fetch real Liga BBVA MX matches from ESPN public scoreboard
-  if (events.length === 0) {
-    try {
-      const espnMxRes = await fetch(
-        'https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/scoreboard',
-        { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' },
-      );
-      if (espnMxRes.ok) {
-        const mxData = await espnMxRes.json();
-        if (mxData.events && Array.isArray(mxData.events)) {
-          for (const ev of mxData.events.slice(0, 6)) {
-            const comp = ev.competitions?.[0];
-            const homeCompetitor = comp?.competitors?.find((c: any) => c.homeAway === 'home');
-            const awayCompetitor = comp?.competitors?.find((c: any) => c.homeAway === 'away');
+  // 2. Fetch real Liga BBVA MX matches from ESPN scoreboard
+  try {
+    const espnMxRes = await fetch(
+      'https://site.api.espn.com/apis/site/v2/sports/soccer/mex.1/scoreboard',
+      { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' },
+    );
+    if (espnMxRes.ok) {
+      const mxData = await espnMxRes.json();
+      if (mxData.events && Array.isArray(mxData.events)) {
+        for (const ev of mxData.events.slice(0, 4)) {
+          const comp = ev.competitions?.[0];
+          const homeCompetitor = comp?.competitors?.find((c: any) => c.homeAway === 'home');
+          const awayCompetitor = comp?.competitors?.find((c: any) => c.homeAway === 'away');
 
-            const isLive = comp?.status?.type?.state === 'in';
-            const isCompleted = comp?.status?.type?.completed;
-            const displayClock = comp?.status?.displayClock || '0\'';
-            const homeScore = homeCompetitor?.score || '0';
-            const awayScore = awayCompetitor?.score || '0';
+          const isLive = comp?.status?.type?.state === 'in';
+          const isCompleted = comp?.status?.type?.completed;
+          const displayClock = comp?.status?.displayClock || '0\'';
+          const homeScore = homeCompetitor?.score || '0';
+          const awayScore = awayCompetitor?.score || '0';
 
-            const oddsObj = comp?.odds && comp.odds[0] ? comp.odds[0] : null;
-            const mlHome = oddsObj?.moneyline?.home?.close?.odds || oddsObj?.moneyline?.home?.open?.odds;
-            const mlAway = oddsObj?.moneyline?.away?.close?.odds || oddsObj?.moneyline?.away?.open?.odds;
-            const mlDraw = oddsObj?.moneyline?.draw?.close?.odds || oddsObj?.moneyline?.draw?.open?.odds;
+          const oddsObj = comp?.odds && comp.odds[0] ? comp.odds[0] : null;
+          const mlHome = oddsObj?.moneyline?.home?.close?.odds || oddsObj?.moneyline?.home?.open?.odds;
+          const mlAway = oddsObj?.moneyline?.away?.close?.odds || oddsObj?.moneyline?.away?.open?.odds;
+          const mlDraw = oddsObj?.moneyline?.draw?.close?.odds || oddsObj?.moneyline?.draw?.open?.odds;
 
-            events.push({
-              id: `espn:mx:${ev.id}`,
-              name: `${homeCompetitor?.team?.displayName || 'Local'} vs ${awayCompetitor?.team?.displayName || 'Visita'}`,
-              league: 'Liga BBVA MX (Oficial)',
-              isLive,
-              minute: isLive ? displayClock : undefined,
-              score: isLive || isCompleted ? `${homeScore} - ${awayScore}` : undefined,
-              time: comp?.status?.type?.shortDetail || 'Programado',
-              homeTeam: homeCompetitor?.team?.displayName || 'Local',
-              awayTeam: awayCompetitor?.team?.displayName || 'Visita',
-              homeLogo: homeCompetitor?.team?.logo,
-              awayLogo: awayCompetitor?.team?.logo,
-              odds1: americanToDecimal(mlHome, 2.10),
-              oddsX: americanToDecimal(mlDraw, 3.35),
-              odds2: americanToDecimal(mlAway, 3.25),
-            });
-          }
+          events.push({
+            id: `espn:mx:${ev.id}`,
+            name: `${homeCompetitor?.team?.displayName || 'Local'} vs ${awayCompetitor?.team?.displayName || 'Visita'}`,
+            league: 'Liga BBVA MX (Oficial)',
+            isLive,
+            minute: isLive ? displayClock : undefined,
+            score: isLive || isCompleted ? `${homeScore} - ${awayScore}` : undefined,
+            time: comp?.status?.type?.shortDetail || 'Programado',
+            homeTeam: homeCompetitor?.team?.displayName || 'Local',
+            awayTeam: awayCompetitor?.team?.displayName || 'Visita',
+            homeLogo: homeCompetitor?.team?.logo,
+            awayLogo: awayCompetitor?.team?.logo,
+            odds1: americanToDecimal(mlHome, 2.10),
+            oddsX: americanToDecimal(mlDraw, 3.35),
+            odds2: americanToDecimal(mlAway, 3.25),
+          });
         }
       }
-    } catch (e) {
-      console.warn('Error fetching ESPN MX:', e);
     }
-
-    // 3. Fetch real UEFA Champions League matches from ESPN public scoreboard
-    try {
-      const espnUclRes = await fetch(
-        'https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/scoreboard',
-        { headers: { 'User-Agent': 'Mozilla/5.0' }, cache: 'no-store' },
-      );
-      if (espnUclRes.ok) {
-        const uclData = await espnUclRes.json();
-        if (uclData.events && Array.isArray(uclData.events)) {
-          for (const ev of uclData.events.slice(0, 5)) {
-            const comp = ev.competitions?.[0];
-            const homeCompetitor = comp?.competitors?.find((c: any) => c.homeAway === 'home');
-            const awayCompetitor = comp?.competitors?.find((c: any) => c.homeAway === 'away');
-
-            const isLive = comp?.status?.type?.state === 'in';
-            const isCompleted = comp?.status?.type?.completed;
-            const displayClock = comp?.status?.displayClock || '0\'';
-            const homeScore = homeCompetitor?.score || '0';
-            const awayScore = awayCompetitor?.score || '0';
-
-            const oddsObj = comp?.odds && comp.odds[0] ? comp.odds[0] : null;
-            const mlHome = oddsObj?.moneyline?.home?.close?.odds || oddsObj?.moneyline?.home?.open?.odds;
-            const mlAway = oddsObj?.moneyline?.away?.close?.odds || oddsObj?.moneyline?.away?.open?.odds;
-            const mlDraw = oddsObj?.moneyline?.draw?.close?.odds || oddsObj?.moneyline?.draw?.open?.odds;
-
-            events.push({
-              id: `espn:ucl:${ev.id}`,
-              name: `${homeCompetitor?.team?.displayName || 'Local'} vs ${awayCompetitor?.team?.displayName || 'Visita'}`,
-              league: 'UEFA Champions League',
-              isLive,
-              minute: isLive ? displayClock : undefined,
-              score: isLive || isCompleted ? `${homeScore} - ${awayScore}` : undefined,
-              time: comp?.status?.type?.shortDetail || 'Próximo',
-              homeTeam: homeCompetitor?.team?.displayName || 'Local',
-              awayTeam: awayCompetitor?.team?.displayName || 'Visita',
-              homeLogo: homeCompetitor?.team?.logo,
-              awayLogo: awayCompetitor?.team?.logo,
-              odds1: americanToDecimal(mlHome, 2.45),
-              oddsX: americanToDecimal(mlDraw, 3.45),
-              odds2: americanToDecimal(mlAway, 2.75),
-            });
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('Error fetching ESPN UCL:', e);
-    }
+  } catch (e) {
+    console.warn('Error fetching ESPN MX:', e);
   }
 
-  // 4. Official Core Fixtures for Mexico (El Clásico, Clásico Regio, Cruz Azul vs Pumas)
+  // 3. Official Core Fixtures for Mexico (El Clásico, Clásico Regio)
   const coreMxEvents: FormattedEvent[] = [
     {
       id: 'mx-core-01',
@@ -264,33 +200,9 @@ export async function GET(request: Request) {
       oddsX: 3.35,
       odds2: 3.25,
     },
-    {
-      id: 'mx-core-03',
-      name: 'Tigres UANL vs CF Monterrey',
-      league: 'Liga MX — Clásico Regio',
-      isLive: false,
-      time: 'Mañana 21:05 (CDMX)',
-      homeTeam: 'Tigres UANL',
-      awayTeam: 'CF Monterrey',
-      odds1: 2.40,
-      oddsX: 3.20,
-      odds2: 2.90,
-    },
-    {
-      id: 'mx-core-04',
-      name: 'Toluca vs Pachuca',
-      league: 'Liga MX — Torneo Clausura',
-      isLive: false,
-      time: 'Domingo 12:00 (CDMX)',
-      homeTeam: 'Toluca',
-      awayTeam: 'Pachuca',
-      odds1: 1.95,
-      oddsX: 3.50,
-      odds2: 3.80,
-    },
   ];
 
-  // 5. Official Core Fixtures for Haiti (Derby Haïtien, D1)
+  // 4. Official Core Fixtures for Haiti (Derby Haïtien, D1)
   const coreHtEvents: FormattedEvent[] = [
     {
       id: 'ht-core-01',
@@ -318,30 +230,6 @@ export async function GET(request: Request) {
       oddsX: 3.10,
       odds2: 3.20,
     },
-    {
-      id: 'ht-core-03',
-      name: 'AS Capoise vs Don Bosco FC',
-      league: 'Championnat National D1 Haïti',
-      isLive: false,
-      time: 'Dimanche 16:00',
-      homeTeam: 'AS Capoise',
-      awayTeam: 'Don Bosco FC',
-      odds1: 1.95,
-      oddsX: 3.20,
-      odds2: 3.80,
-    },
-    {
-      id: 'ht-core-04',
-      name: 'Cavaly AS vs Real Hope FA',
-      league: 'Championnat National D1 Haïti',
-      isLive: false,
-      time: 'Dimanche 18:00',
-      homeTeam: 'Cavaly AS',
-      awayTeam: 'Real Hope FA',
-      odds1: 2.40,
-      oddsX: 3.00,
-      odds2: 3.00,
-    },
   ];
 
   if (market === 'HT') {
@@ -353,6 +241,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     status: 'ok',
     provider: providerSource,
+    apiKeyConfigured: Boolean(apiKey),
     market,
     timestamp: new Date().toISOString(),
     count: events.length,

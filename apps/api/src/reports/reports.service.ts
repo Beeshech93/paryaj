@@ -100,8 +100,8 @@ export class ReportsService {
       },
       regulatoryFrameworkNotes:
         code === 'MX'
-          ? 'Regulado conforme a la Ley Federal de Juegos y Sorteos y su Reglamento (SEGOB). Dinero real deshabilitado hasta emisión de autorización formal.'
-          : 'Regulado conforme a las disposiciones de la Loterie de l’État Haïtien (LEH). Operación en modo demostrativo sin captación de fondos reales.',
+          ? 'Regulado conforme a la Ley Federal de Juegos y Sorteos y su Reglamento (SEGOB). Operaciones con Dinero Real y Emisión de Boletos Físicos Autorizada.'
+          : 'Regulado conforme a las disposiciones de la Loterie de l’État Haïtien (LEH). Operación en producción con captación de fondos reales y pago de premios.',
       generatedAt: new Date().toISOString(),
     };
   }

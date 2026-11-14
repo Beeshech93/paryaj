@@ -453,25 +453,13 @@ export const SportsbookArena: React.FC = () => {
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase font-mono">Modo de Apuestas</span>
                 <span className="text-xs font-black flex items-center gap-1.5 mt-0.5">
-                  {isRealMode ? (
-                    <>
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-emerald-400">DINERO REAL (PROD)</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="w-2 h-2 rounded-full bg-yellow-400" />
-                      <span className="text-yellow-400">MODO DEMO TÉCNICO</span>
-                    </>
-                  )}
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-emerald-400">DINERO REAL (PROD)</span>
                 </span>
               </div>
-              <button
-                onClick={() => setIsRealMode(!isRealMode)}
-                className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-slate-700 hover:border-brand-mint bg-brand-dark text-slate-300 hover:text-white transition-all"
-              >
-                {isRealMode ? 'Cambiar a Demo' : 'Activar Real'}
-              </button>
+              <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                PRODUCCIÓN ACTIVA
+              </span>
             </div>
 
             {/* Leagues Directory */}

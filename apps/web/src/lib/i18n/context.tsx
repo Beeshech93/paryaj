@@ -86,12 +86,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedRealBal) {
         setRealBalance(parseFloat(savedRealBal));
       }
-      const savedMode = localStorage.getItem('nb_operating_mode');
-      if (savedMode === 'demo') {
-        setIsRealModeState(false);
-      } else {
-        setIsRealModeState(true);
-      }
+      // Force real production mode by default and clear legacy demo storage
+      localStorage.setItem('nb_operating_mode', 'production');
+      setIsRealModeState(true);
       const savedUser = localStorage.getItem('nb_user');
       if (savedUser) {
         setUser(JSON.parse(savedUser));
