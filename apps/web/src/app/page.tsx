@@ -65,6 +65,8 @@ interface LiveEvent {
   id: string;
   name: string;
   league: string;
+  sport?: 'basketball' | 'hockey' | 'football' | 'soccer' | 'other';
+  sportLabel?: string;
   isLive: boolean;
   minute?: string;
   score?: string;
@@ -76,6 +78,7 @@ interface LiveEvent {
   odds1: number;
   oddsX: number;
   odds2: number;
+  hasDraw?: boolean;
 }
 
 interface AgencyData {
@@ -100,6 +103,7 @@ export default function PointOfSaleApp() {
 
   // Real API State
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  const [selectedSportFilter, setSelectedSportFilter] = useState<string>('all');
   const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(true);
   const [apiStatus, setApiStatus] = useState<'connected' | 'syncing' | 'offline'>('connected');
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
@@ -489,26 +493,47 @@ export default function PointOfSaleApp() {
               <div className="flex flex-wrap items-center justify-between pb-3 border-b border-slate-800 gap-2">
                 <div>
                   <h2 className="font-black text-base text-white flex items-center gap-2">
-                    <span>⚽ Partidos en Vivo y Oficiales (API Feed en Tiempo Real)</span>
+                    <span>🏆 Eventos Deportivos Reales (SportsGameOdds API en Vivo)</span>
                   </h2>
                   <p className="text-xs text-slate-400">
-                    {market === 'MX'
-                      ? 'Cuotas oficiales de Liga BBVA MX y UEFA Champions League auditadas para terminales SEGOB'
-                      : 'Kòt ofisyèl Championnat D1 ak UEFA verifye pou banca ak kiosk Loterie Nationale d’Haïti (LEH)'}
+                    Cuotas oficiales en tiempo real auditadas para terminales físicas (NBA, Fútbol, NHL, NFL, NCAA).
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30 font-bold">
-                    {liveEvents.length} Eventos Sincronizados
+                    {liveEvents.length} Eventos Reales
                   </span>
                   <button
                     onClick={() => fetchLiveSportsFeed(market)}
-                    className="p-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300"
-                    title="Actualizar eventos"
+                    className="p-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300 transition-all"
+                    title="Actualizar eventos en tiempo real"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isLoadingEvents ? 'animate-spin text-emerald-400' : ''}`} />
                   </button>
                 </div>
+              </div>
+
+              {/* Sport Category Filter Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+                {[
+                  { id: 'all', label: `🔥 Todos (${liveEvents.length})` },
+                  { id: 'basketball', label: `🏀 NBA / Basket (${liveEvents.filter((e) => e.sport === 'basketball').length})` },
+                  { id: 'soccer', label: `⚽ Fútbol (${liveEvents.filter((e) => e.sport === 'soccer').length})` },
+                  { id: 'hockey', label: `🏒 NHL (${liveEvents.filter((e) => e.sport === 'hockey').length})` },
+                  { id: 'football', label: `🏈 NFL (${liveEvents.filter((e) => e.sport === 'football').length})` },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSelectedSportFilter(tab.id)}
+                    className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all border ${
+                      selectedSportFilter === tab.id
+                        ? 'bg-emerald-500 text-black border-emerald-400 shadow-md font-black'
+                        : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
               {/* Event Cards */}
@@ -525,54 +550,75 @@ export default function PointOfSaleApp() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {liveEvents.map((evt) => (
-                    <div
-                      key={evt.id}
-                      className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-amber-400 tracking-wider uppercase font-mono">
-                            {evt.league}
-                          </span>
-                          {evt.isLive && (
-                            <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[9px] font-mono font-bold animate-pulse">
-                              ● EN VIVO ({evt.minute || 'LIVE'} {evt.score ? `• ${evt.score}` : ''})
+                  {liveEvents
+                    .filter((e) => selectedSportFilter === 'all' || e.sport === selectedSportFilter)
+                    .map((evt) => (
+                      <div
+                        key={evt.id}
+                        className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-bold text-amber-400 tracking-wider uppercase font-mono">
+                              {evt.league}
                             </span>
-                          )}
-                          {!evt.isLive && evt.time && (
-                            <span className="text-[10px] text-slate-400 font-mono">({evt.time})</span>
-                          )}
+                            {evt.isLive && (
+                              <span className="px-2 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[9px] font-mono font-bold animate-pulse">
+                                ● EN VIVO ({evt.minute || 'LIVE'} {evt.score ? `• ${evt.score}` : ''})
+                              </span>
+                            )}
+                            {!evt.isLive && evt.time && (
+                              <span className="text-[10px] text-slate-400 font-mono">({evt.time})</span>
+                            )}
+                          </div>
+                          <h3 className="font-bold text-sm text-white">{evt.name}</h3>
                         </div>
-                        <h3 className="font-bold text-sm text-white">{evt.name}</h3>
-                      </div>
 
-                      {/* Odds 1X2 Buttons */}
-                      <div className="grid grid-cols-3 gap-2 min-w-[280px]">
-                        <button
-                          onClick={() => handleAddPick(evt, '1', evt.odds1)}
-                          className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
-                        >
-                          <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">1 (Local)</span>
-                          <span className="font-mono font-black text-sm">{evt.odds1.toFixed(2)}</span>
-                        </button>
-                        <button
-                          onClick={() => handleAddPick(evt, 'X', evt.oddsX)}
-                          className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
-                        >
-                          <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">X (Empate)</span>
-                          <span className="font-mono font-black text-sm">{evt.oddsX.toFixed(2)}</span>
-                        </button>
-                        <button
-                          onClick={() => handleAddPick(evt, '2', evt.odds2)}
-                          className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
-                        >
-                          <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">2 (Visita)</span>
-                          <span className="font-mono font-black text-sm">{evt.odds2.toFixed(2)}</span>
-                        </button>
+                        {/* Odds Buttons (2-way for Basketball/Hockey/Football, 3-way for Soccer) */}
+                        {evt.hasDraw ? (
+                          <div className="grid grid-cols-3 gap-2 min-w-[280px]">
+                            <button
+                              onClick={() => handleAddPick(evt, '1', evt.odds1)}
+                              className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
+                            >
+                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">1 (Local)</span>
+                              <span className="font-mono font-black text-sm">{evt.odds1.toFixed(2)}</span>
+                            </button>
+                            <button
+                              onClick={() => handleAddPick(evt, 'X', evt.oddsX)}
+                              className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
+                            >
+                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">X (Empate)</span>
+                              <span className="font-mono font-black text-sm">{evt.oddsX.toFixed(2)}</span>
+                            </button>
+                            <button
+                              onClick={() => handleAddPick(evt, '2', evt.odds2)}
+                              className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
+                            >
+                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">2 (Visita)</span>
+                              <span className="font-mono font-black text-sm">{evt.odds2.toFixed(2)}</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2 min-w-[240px]">
+                            <button
+                              onClick={() => handleAddPick(evt, '1', evt.odds1)}
+                              className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
+                            >
+                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">1 ({evt.homeTeam || 'Local'})</span>
+                              <span className="font-mono font-black text-sm">{evt.odds1.toFixed(2)}</span>
+                            </button>
+                            <button
+                              onClick={() => handleAddPick(evt, '2', evt.odds2)}
+                              className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-800 hover:bg-emerald-500 hover:text-black transition-all border border-slate-700/60 active:scale-95 group"
+                            >
+                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-black">2 ({evt.awayTeam || 'Visita'})</span>
+                              <span className="font-mono font-black text-sm">{evt.odds2.toFixed(2)}</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               )}
             </div>
