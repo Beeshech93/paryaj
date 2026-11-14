@@ -17,6 +17,11 @@ interface FormattedEvent {
   odds1: number;
   oddsX: number;
   odds2: number;
+  oddDetails?: {
+    marketId: string;
+    bookmaker: string;
+    updatedAt?: string;
+  };
 }
 
 function americanToDecimal(american: string | number | undefined, defaultVal: number): number {
@@ -38,48 +43,70 @@ export async function GET(request: Request) {
   const events: FormattedEvent[] = [];
   let providerSource = 'STANDARD_FEED';
 
-  // 1. If user configured SportsGameOdds API Key, query the SportsGameOdds v2 API directly!
+  // 1. Official SportsGameOdds Reference Implementation (https://sportsgameodds.com/docs/reference)
+  // Standard 5-part oddID format: {statID}-{statEntityID}-{periodID}-{betTypeID}-{sideID}
+  // Moneyline 1X2:
+  // - 1 (Home): points-home-game-ml-home
+  // - X (Draw): points-draw-game-ml-draw
+  // - 2 (Away): points-away-game-ml-away
   if (apiKey) {
     try {
-      const sgoRes = await fetch(
-        'https://api.sportsgameodds.com/v2/events/?oddsAvailable=true&limit=25',
-        {
-          headers: {
-            'x-api-key': apiKey,
-            'Accept': 'application/json',
-          },
-          cache: 'no-store',
+      const oddIDsParam = 'points-home-game-ml-home,points-draw-game-ml-draw,points-away-game-ml-away';
+      const sgoEndpoint = `https://api.sportsgameodds.com/v2/events/?oddsAvailable=true&oddIDs=${oddIDsParam}&includeOpposingOddIDs=true&limit=25`;
+
+      const sgoRes = await fetch(sgoEndpoint, {
+        headers: {
+          'x-api-key': apiKey,
+          'Accept': 'application/json',
         },
-      );
+        cache: 'no-store',
+      });
 
       if (sgoRes.ok) {
         const sgoData = await sgoRes.json();
         const items = sgoData.data || sgoData.events || [];
 
         if (Array.isArray(items) && items.length > 0) {
-          providerSource = 'SPORTSGAMEODDS_API_V2';
+          providerSource = 'SPORTSGAMEODDS_V2_REFERENCE';
 
           for (const ev of items) {
             const homeName = ev.teams?.home?.name || 'Local';
             const awayName = ev.teams?.away?.name || 'Visita';
             const isLive = Boolean(ev.status?.live);
-            const leagueTitle = ev.leagueID || ev.sportID || 'Sports';
+            const leagueTitle = ev.leagueID || ev.sportID || 'Fútbol Oficial';
 
-            // Extract best odds from bookmakers in SportsGameOdds format
+            // Extract Exact 1X2 Odds according to SportsGameOdds Reference Spec
             let homeOdds = 1.95;
             let drawOdds = 3.30;
             let awayOdds = 3.60;
+            let bookieName = 'Consensus';
 
             if (ev.odds) {
-              // Iterate odd entries looking for moneyline/1X2
-              for (const [key, oddItem] of Object.entries<any>(ev.odds)) {
-                const bookies = Object.values<any>(oddItem?.bookmakers || {});
-                const firstBookie = bookies[0];
-                if (firstBookie?.decimal) {
-                  const dec = parseFloat(firstBookie.decimal);
-                  if (key.includes('home') || key.includes('-1')) homeOdds = Math.round(dec * 100) / 100;
-                  else if (key.includes('away') || key.includes('-2')) awayOdds = Math.round(dec * 100) / 100;
-                  else if (key.includes('draw') || key.includes('-x')) drawOdds = Math.round(dec * 100) / 100;
+              // 1. Home Win
+              const homeOddObj = ev.odds['points-home-game-ml-home'];
+              if (homeOddObj && homeOddObj.bookmakers) {
+                const bList = Object.values<any>(homeOddObj.bookmakers);
+                if (bList.length > 0) {
+                  homeOdds = bList[0].decimal ? parseFloat(bList[0].decimal) : americanToDecimal(bList[0].price, 1.95);
+                  bookieName = bList[0].bookmakerID || 'SportsGameOdds';
+                }
+              }
+
+              // 2. Draw
+              const drawOddObj = ev.odds['points-draw-game-ml-draw'];
+              if (drawOddObj && drawOddObj.bookmakers) {
+                const bList = Object.values<any>(drawOddObj.bookmakers);
+                if (bList.length > 0) {
+                  drawOdds = bList[0].decimal ? parseFloat(bList[0].decimal) : americanToDecimal(bList[0].price, 3.30);
+                }
+              }
+
+              // 3. Away Win
+              const awayOddObj = ev.odds['points-away-game-ml-away'];
+              if (awayOddObj && awayOddObj.bookmakers) {
+                const bList = Object.values<any>(awayOddObj.bookmakers);
+                if (bList.length > 0) {
+                  awayOdds = bList[0].decimal ? parseFloat(bList[0].decimal) : americanToDecimal(bList[0].price, 3.60);
                 }
               }
             }
@@ -94,15 +121,20 @@ export async function GET(request: Request) {
               time: ev.status?.startsAt ? new Date(ev.status.startsAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Programado',
               homeTeam: homeName,
               awayTeam: awayName,
-              odds1: homeOdds,
-              oddsX: drawOdds,
-              odds2: awayOdds,
+              odds1: Math.round(homeOdds * 100) / 100,
+              oddsX: Math.round(drawOdds * 100) / 100,
+              odds2: Math.round(awayOdds * 100) / 100,
+              oddDetails: {
+                marketId: 'points-home-game-ml-home',
+                bookmaker: bookieName,
+                updatedAt: ev.status?.startsAt,
+              },
             });
           }
         }
       }
     } catch (err) {
-      console.warn('Error querying SportsGameOdds API, falling back to backup feed:', err);
+      console.warn('[SportsGameOdds Reference] Error de consulta:', err);
     }
   }
 
