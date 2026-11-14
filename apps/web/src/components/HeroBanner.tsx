@@ -1,212 +1,178 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '@/lib/i18n/context';
-import { ShieldCheck, Sparkles, Trophy, Dices, ArrowRight, Zap, Play, Wallet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trophy, Zap, ShieldCheck } from 'lucide-react';
 
 export const HeroBanner: React.FC = () => {
-  const { t, market, locale, isRealMode, openAuth, openWallet } = useApp();
-  const [activeSlide, setActiveSlide] = useState(0);
+  const { openAuth } = useApp();
+  const [currentSlide, setCurrentSlide] = useState(3);
+  const totalSlides = 8;
 
-  const slides = [
-    {
-      tag: isRealMode ? 'PLATAFORMA REGULADA EN VIVO' : t.hero.tag,
-      title: t.hero.title,
-      highlight: t.hero.titleHighlight,
-      desc: isRealMode
-        ? market === 'MX'
-          ? 'Bienvenido al operador de nueva generación en México. Cuotas oficiales de Liga MX en directo, slots de Pragmatic Play y mesas en vivo de Evolution Gaming con depósitos y retiros instantáneos vía SPEI STP.'
-          : 'Byenveni nan platfòm nouvèl jenerasyon an Ayiti. Kòt ofisyèl Championnat D1 an dirèk, jwèt Pragmatic Play ak Evolution Gaming avèk depo ak retrè rapid pa MonCash.'
-        : t.hero.description,
-      cta1Text: isRealMode ? 'Jugar Casino Real' : t.hero.ctaPrimary,
-      cta1Link: '#casino',
-      cta2Text: isRealMode ? 'Ver Deportes en Vivo' : t.hero.ctaSecondary,
-      cta2Link: '#sportsbook',
-      badge:
-        market === 'MX'
-          ? isRealMode
-            ? 'Licencia SEGOB / DGAJS Operando'
-            : 'Regulado para México · SEGOB Ready'
-          : isRealMode
-          ? 'Otorizasyon Ofisyèl LEH / Loterie Nationale'
-          : 'Conformité Haïtienne · LEH Ready',
-      color: 'from-amber-400 to-yellow-600',
-    },
-    {
-      tag: 'SPORTSBOOK OFICIAL · LIGA MX, D1 & CHAMPIONS',
-      title: 'Las Mejores Cuotas y',
-      highlight: 'Mercados en Directo',
-      desc:
-        market === 'MX'
-          ? 'Apuesta en vivo con cuotas auditadas para Club América, Chivas, Cruz Azul y la UEFA Champions League con pago anticipado y margen garantizado.'
-          : 'Parye an dirèk ak kòt verifye pou Violette AC, Racing Club, Real Madrid ak UEFA Champions League avèk peman rapid.',
-      cta1Text: 'Ver Partidos en Vivo',
-      cta1Link: '#sportsbook',
-      cta2Text: 'Abrir Boleto',
-      cta2Link: '#featured-events',
-      badge: 'Feed Oficial The Odds API & Sportradar',
-      color: 'from-emerald-400 to-green-600',
-    },
-    {
-      tag: 'CASINO REAL · PRAGMATIC PLAY & EVOLUTION',
-      title: 'Slots y Ruletas en Vivo',
-      highlight: 'Multiplicadores hasta 1000x',
-      desc: 'Disfruta de Gates of Olympus 1000, Sweet Bonanza 1000 y Ruleta en Vivo con crupieres en español con integración de billetera continua.',
-      cta1Text: 'Entrar al Casino',
-      cta1Link: '#casino',
-      cta2Text: 'Ver Promociones',
-      cta2Link: '#promotions',
-      badge: 'Seamless Wallet Certificado',
-      color: 'from-yellow-300 to-amber-500',
-    },
-  ];
+  // Auto-advance carousel
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev >= totalSlides ? 1 : prev + 1));
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [totalSlides]);
 
-  const current = slides[activeSlide];
+  const handlePrev = () => {
+    setCurrentSlide((prev) => (prev <= 1 ? totalSlides : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentSlide((prev) => (prev >= totalSlides ? 1 : prev + 1));
+  };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-brand-navy via-brand-dark to-brand-dark pt-8 pb-14 border-b border-brand-navyLight">
-      {/* Background glow effects */}
-      <div className="absolute top-0 left-1/4 -z-10 w-96 h-96 bg-brand-gold/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 -z-10 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+    <section className="relative w-full overflow-hidden bg-gradient-to-r from-[#04241d] via-[#08382f] to-[#041b16] py-8 sm:py-12 lg:py-16 border-b border-[#0f3b32]">
+      {/* Stadium spotlight glow in background */}
+      <div className="absolute top-0 left-1/3 w-[600px] h-[350px] bg-[#10b981]/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[500px] h-[300px] bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Main Copy */}
-          <div className="lg:col-span-8 space-y-6 text-left">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-navyLight border border-brand-gold/40 text-brand-gold text-xs font-bold tracking-wider uppercase">
-                <Sparkles className="w-3.5 h-3.5 text-brand-gold" />
-                {current.tag}
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-brand-positive text-xs font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                {current.badge}
-              </span>
-            </div>
-
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight">
-              {current.title} <br className="hidden sm:inline" />
-              <span className="bg-gradient-to-r from-brand-gold via-yellow-300 to-amber-400 bg-clip-text text-transparent">
-                {current.highlight}
-              </span>
-            </h1>
-
-            <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed">
-              {current.desc}
-            </p>
-
-            {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <a
-                href={current.cta1Link}
-                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-brand-gold via-yellow-400 to-amber-400 text-black font-extrabold text-sm sm:text-base hover:brightness-110 shadow-xl shadow-brand-gold/20 flex items-center gap-2 transition-all group"
-              >
-                <span>{current.cta1Text}</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
-
-              <a
-                href={current.cta2Link}
-                className="px-6 py-3.5 rounded-xl bg-brand-navyLight/80 hover:bg-brand-navyLight border border-slate-700 hover:border-brand-gold/50 text-white font-bold text-sm sm:text-base transition-colors flex items-center gap-2"
-              >
-                <span>{current.cta2Text}</span>
-              </a>
-
-              <a
-                href="/pos"
-                className="px-4 py-3.5 rounded-xl bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 font-bold text-xs sm:text-sm transition-colors flex items-center gap-1.5"
-              >
-                <span>🏪 Punto de Venta Retail</span>
-              </a>
-            </div>
-
-            {/* Regulatory Notice */}
-            <p className="text-xs text-slate-400 pt-2 flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-brand-positive"></span>
-              {isRealMode
-                ? market === 'MX'
-                  ? 'Operación en Producción bajo lineamientos de la Dirección General de Juegos y Sorteos (SEGOB). +18 años.'
-                  : 'Operasyon an Pwodiksyon anba règleman Loterie Nationale d’Haïti (LEH). +18 an.'
-                : t.hero.disclaimer}
-            </p>
-          </div>
-
-          {/* Right Visual Card / Quick Widget */}
-          <div className="lg:col-span-4">
-            <div className="relative rounded-2xl bg-gradient-to-b from-brand-card to-brand-navy p-6 border border-brand-gold/30 shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-brand-positive animate-ping" />
-                  <span className="text-xs font-mono font-bold text-white tracking-wider">
-                    {isRealMode ? '🟢 PRODUCCIÓN EN VIVO' : `${t.common.live} · ACCIÓN DEMO`}
-                  </span>
-                </div>
-                <span className="text-[11px] text-brand-gold font-mono">24/7 ACTIVO</span>
-              </div>
-
-              {/* Mini Interactive Preview: Hot game */}
-              <div className="p-4 rounded-xl bg-brand-dark/80 border border-slate-800 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-700 flex items-center justify-center text-3xl shadow-inner">
-                  ⚡
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-1.5 text-xs text-brand-positive font-bold">
-                    <Zap className="w-3.5 h-3.5 fill-brand-positive" />
-                    <span>Pragmatic Play</span>
-                  </div>
-                  <h4 className="font-bold text-white text-sm">Gates of Olympus 1000</h4>
-                  <p className="text-[11px] text-slate-400 font-mono">RTP: 96.50% · Volatilidad Extrema</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Modo operativo:</span>
-                  <span className="text-brand-positive font-semibold">
-                    {isRealMode ? 'Dinero Real (Oficial)' : 'Simulación Técnica'}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Jurisdicción activa:</span>
-                  <span className="text-slate-200 font-medium">
-                    {market === 'MX' ? 'México (MXN - SPEI)' : 'Haití (HTG - MonCash)'}
-                  </span>
-                </div>
-              </div>
-
-              {isRealMode ? (
-                <button
-                  onClick={() => openWallet('deposit')}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-400 text-black font-black text-sm transition-all flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-brand-gold/20"
-                >
-                  <Wallet className="w-4 h-4 fill-current" />
-                  <span>Cargar Saldo a Billetera</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => openAuth('register')}
-                  className="w-full py-3 rounded-xl bg-brand-navyLight hover:bg-brand-gold hover:text-black border border-brand-gold/40 text-brand-gold font-bold text-sm transition-all flex items-center justify-center gap-2"
-                >
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>Crear Cuenta Gratuita</span>
-                </button>
-              )}
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Pagination Indicator (< > 3/8) */}
+        <div className="flex items-center gap-2 mb-4 text-xs font-mono text-slate-300">
+          <button
+            onClick={handlePrev}
+            className="p-1.5 rounded-lg bg-black/40 hover:bg-black/70 border border-emerald-500/20 text-slate-200 transition-colors"
+            title="Slide Anterior"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={handleNext}
+            className="p-1.5 rounded-lg bg-black/40 hover:bg-black/70 border border-emerald-500/20 text-slate-200 transition-colors"
+            title="Slide Siguiente"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+          <span className="ml-1 tracking-widest font-bold text-slate-200">
+            {currentSlide}/{totalSlides}
+          </span>
         </div>
 
-        {/* Carousel Slide Switcher */}
-        <div className="flex items-center justify-center gap-2 pt-10">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setActiveSlide(idx)}
-              className={`h-2 rounded-full transition-all ${
-                activeSlide === idx ? 'w-8 bg-brand-gold' : 'w-2 bg-slate-700 hover:bg-slate-500'
-              }`}
-              aria-label={`Slide ${idx + 1}`}
-            />
-          ))}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[380px]">
+          {/* Left Column: Huge Headline & Orange APUESTA CTA */}
+          <div className="lg:col-span-6 space-y-6 text-left">
+            <div className="space-y-1 sm:space-y-2">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none uppercase">
+                GANA CON TU
+              </h1>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-none uppercase">
+                DEPORTE
+              </h1>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#facc15] tracking-tight leading-none uppercase drop-shadow-md">
+                FAVORITO
+              </h1>
+            </div>
+
+            <p className="text-sm sm:text-base text-slate-300 max-w-lg leading-relaxed">
+              Las mejores cuotas en vivo para NBA, Champions League, Liga MX, NFL y Tenis con pagos inmediatos.
+            </p>
+
+            {/* Bright Orange APUESTA Button */}
+            <div>
+              <a
+                href="#sportsbook"
+                className="inline-block bg-gradient-to-r from-[#ff6a00] via-[#f97316] to-[#ea580c] hover:from-[#ea580c] hover:to-[#c2410c] text-white font-black text-base sm:text-lg uppercase tracking-wider px-10 py-3.5 rounded-xl shadow-xl shadow-orange-500/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all text-center"
+              >
+                APUESTA
+              </a>
+            </div>
+          </div>
+
+          {/* Right Column: Circular Grass Podium with 4 Sports Champions */}
+          <div className="lg:col-span-6 flex items-center justify-center relative">
+            <div className="relative w-full max-w-[520px] h-[340px] flex items-center justify-center">
+              {/* Circular Turf Grass Base (3D Perspective) */}
+              <div className="absolute bottom-2 w-72 sm:w-96 h-28 sm:h-36 rounded-[50%] bg-gradient-to-b from-[#22c55e] via-[#15803d] to-[#14532d] border-4 border-[#4ade80]/40 shadow-2xl shadow-emerald-950/80 transform rotate-x-12 scale-y-75 flex items-center justify-center overflow-hidden">
+                <div className="w-full h-full opacity-40 bg-[radial-gradient(#16a34a_2px,transparent_2px)] [background-size:12px_12px]" />
+                {/* Grass border texture */}
+                <div className="absolute inset-0 rounded-[50%] border-2 border-white/20" />
+              </div>
+
+              {/* Athletes Composition */}
+              <div className="relative z-10 w-full h-full flex items-end justify-center gap-1 sm:gap-2 pb-6">
+                {/* 1. American Football Player */}
+                <div className="flex flex-col items-center transform -translate-x-2 group">
+                  <div className="w-20 sm:w-24 h-48 sm:h-56 bg-gradient-to-t from-slate-900 to-slate-800 rounded-t-3xl border border-slate-700/60 shadow-xl flex flex-col items-center justify-between p-2 relative overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-white border-2 border-slate-400 flex items-center justify-center shadow-md">
+                      <span className="text-[9px] font-black text-slate-800">🏈</span>
+                    </div>
+                    <div className="w-14 h-24 bg-gradient-to-b from-blue-700 to-indigo-900 rounded-t-lg flex flex-col items-center justify-center text-white">
+                      <span className="text-[10px] font-mono font-bold text-blue-200">NFL</span>
+                      <span className="text-sm font-black">99</span>
+                    </div>
+                    <div className="w-12 h-16 bg-white rounded-b-md flex items-center justify-center">
+                      <span className="text-[10px] font-black text-slate-600">PRO</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-300 mt-1 uppercase tracking-wider">NFL</span>
+                </div>
+
+                {/* 2. Football / Soccer Player (Center-Left) */}
+                <div className="flex flex-col items-center transform -translate-y-2 z-20">
+                  <div className="w-22 sm:w-28 h-56 sm:h-64 bg-gradient-to-t from-blue-900 to-sky-700 rounded-t-3xl border-2 border-sky-400/50 shadow-2xl flex flex-col items-center justify-between p-2.5 relative overflow-hidden">
+                    {/* Head */}
+                    <div className="w-9 h-9 rounded-full bg-[#fcd34d] border-2 border-white flex items-center justify-center shadow-md">
+                      <span className="text-[10px] font-black text-slate-800">👤</span>
+                    </div>
+                    {/* Jersey */}
+                    <div className="w-16 h-28 bg-gradient-to-b from-blue-600 to-blue-800 rounded-t-xl flex flex-col items-center justify-center text-white shadow-inner">
+                      <span className="text-[9px] font-bold tracking-widest text-sky-200 uppercase">FÚTBOL</span>
+                      <span className="text-xl font-black text-yellow-300">10</span>
+                      <span className="text-[8px] font-mono text-white/80">CHAMPIONS</span>
+                    </div>
+                    {/* Soccer Ball at feet */}
+                    <div className="w-9 h-9 rounded-full bg-white border-2 border-black flex items-center justify-center shadow-lg transform -translate-y-1">
+                      <span className="text-sm">⚽</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black text-emerald-400 mt-1 uppercase tracking-wider">Fútbol</span>
+                </div>
+
+                {/* 3. Basketball Player (#5) (Center-Right) */}
+                <div className="flex flex-col items-center transform -translate-y-4 z-20">
+                  <div className="w-22 sm:w-28 h-60 sm:h-68 bg-gradient-to-t from-slate-100 to-white rounded-t-3xl border-2 border-amber-400/50 shadow-2xl flex flex-col items-center justify-between p-2.5 relative overflow-hidden text-black">
+                    {/* Head */}
+                    <div className="w-9 h-9 rounded-full bg-[#f59e0b] border-2 border-white flex items-center justify-center shadow-md">
+                      <span className="text-[10px] font-black text-slate-800">👤</span>
+                    </div>
+                    {/* White Jersey #5 */}
+                    <div className="w-16 h-32 bg-white rounded-t-xl border border-slate-300 flex flex-col items-center justify-center shadow-sm">
+                      <span className="text-[9px] font-bold tracking-widest text-blue-900 uppercase">NBA</span>
+                      <span className="text-2xl font-black text-blue-800">5</span>
+                      <span className="text-[8px] font-mono text-slate-500">ALL-STAR</span>
+                    </div>
+                    {/* Basketball */}
+                    <div className="w-9 h-9 rounded-full bg-[#ea580c] border-2 border-black flex items-center justify-center shadow-lg transform -translate-y-1">
+                      <span className="text-sm">🏀</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black text-amber-400 mt-1 uppercase tracking-wider">NBA</span>
+                </div>
+
+                {/* 4. Tennis Player */}
+                <div className="flex flex-col items-center transform translate-x-2">
+                  <div className="w-20 sm:w-24 h-48 sm:h-56 bg-gradient-to-t from-slate-800 to-slate-700 rounded-t-3xl border border-slate-600/60 shadow-xl flex flex-col items-center justify-between p-2 relative overflow-hidden">
+                    <div className="w-8 h-8 rounded-full bg-white border-2 border-slate-400 flex items-center justify-center shadow-md">
+                      <span className="text-[9px] font-black text-slate-800">🎾</span>
+                    </div>
+                    <div className="w-14 h-24 bg-gradient-to-b from-white to-slate-200 rounded-t-lg flex flex-col items-center justify-center text-slate-900">
+                      <span className="text-[9px] font-bold text-slate-600">ATP</span>
+                      <span className="text-sm font-black">1</span>
+                    </div>
+                    <div className="w-12 h-16 bg-blue-950 rounded-b-md flex items-center justify-center text-white">
+                      <span className="text-[10px] font-black">SLAM</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-300 mt-1 uppercase tracking-wider">Tenis</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

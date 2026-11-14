@@ -1,23 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/lib/i18n/context';
 import {
-  ShieldAlert,
   Coins,
-  RefreshCw,
   User,
   LogOut,
   Menu,
   X,
   ChevronDown,
-  Dices,
-  Trophy,
-  Flame,
-  Sparkles,
   Gift,
+  Tv,
+  BarChart2,
+  Radio,
+  Flame,
   Store,
+  Wallet,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -27,10 +26,7 @@ export const Header: React.FC = () => {
     setLocale,
     market,
     setMarket,
-    demoBalance,
-    resetDemoBalance,
     isRealMode,
-    setIsRealMode,
     realBalance,
     openWallet,
     user,
@@ -41,331 +37,302 @@ export const Header: React.FC = () => {
     betSelections,
   } = useApp();
 
+  const [currentTime, setCurrentTime] = useState<string>('16:33:55 GMT-5');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [marketDropdownOpen, setMarketDropdownOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string>('deportes');
+
+  // Real-time Clock
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      setCurrentTime(`${hours}:${minutes}:${seconds} GMT-5`);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const currencySymbol = market === 'MX' ? 'MXN' : 'HTG';
+  const currencySign = market === 'MX' ? '$' : 'G';
+
+  const menuItems = [
+    { id: 'deportes', label: 'DEPORTES', href: '#sportsbook' },
+    { id: 'en-vivo', label: 'EN VIVO', href: '#featured-events', isLive: true },
+    { id: 'esports', label: 'E-SPORTS', href: '#esports' },
+    { id: 'tragamonedas', label: 'TRAGAMONEDAS', href: '#casino' },
+    { id: 'casino-en-vivo', label: 'CASINO EN VIVO', href: '#live-casino' },
+    { id: 'juegos-tv', label: 'JUEGOS TV', href: '#fast-games' },
+    { id: 'deportes-virtuales', label: 'DEPORTES VIRTUALES', href: '#virtuals' },
+    { id: 'fast-games', label: 'FAST GAMES', href: '#fast-games' },
+    { id: 'blackjack', label: 'BLACKJACK', href: '#casino', isNew: true },
+  ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-brand-navyLight bg-brand-navy/95 backdrop-blur-md">
-      {/* Top Regulatory Warning Bar */}
-      <div className="bg-brand-dark/90 border-b border-slate-800/80 px-4 py-1.5 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400 border border-emerald-500/50 shadow-sm shadow-emerald-500/20">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              {t.common.prodBadge}
-            </span>
-            <span className="hidden sm:inline text-slate-300 font-medium text-[11px]">
-              {t.common.prodMessage}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4 text-[11px]">
-            <span className="text-slate-400 hidden md:inline">{t.common.responsibleGaming18}</span>
-
-            {/* Market Switcher */}
-            <div className="relative">
-              <button
-                onClick={() => setMarketDropdownOpen(!marketDropdownOpen)}
-                className="flex items-center gap-1 hover:text-brand-gold transition-colors text-slate-300 font-medium"
-              >
-                <span>{market === 'MX' ? '🇲🇽 México' : '🇭🇹 Haïti'}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
-              </button>
-              {marketDropdownOpen && (
-                <div className="absolute right-0 mt-1 w-32 rounded-lg bg-brand-card border border-brand-navyLight shadow-xl py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setMarket('MX');
-                      setMarketDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 hover:bg-brand-navyLight text-xs flex items-center justify-between ${
-                      market === 'MX' ? 'text-brand-gold font-bold' : 'text-slate-300'
-                    }`}
-                  >
-                    <span>🇲🇽 México</span>
-                    {market === 'MX' && <span className="text-brand-gold text-[10px]">●</span>}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMarket('HT');
-                      setMarketDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 hover:bg-brand-navyLight text-xs flex items-center justify-between ${
-                      market === 'HT' ? 'text-brand-gold font-bold' : 'text-slate-300'
-                    }`}
-                  >
-                    <span>🇭🇹 Haïti</span>
-                    {market === 'HT' && <span className="text-brand-gold text-[10px]">●</span>}
-                  </button>
-                </div>
-              )}
+    <header className="sticky top-0 z-50 w-full bg-[#121920] border-b border-[#1f2933] shadow-xl font-sans">
+      {/* 1. TOP HEADER BAR */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Left: Brand Logo + Clock + Promo Button + Utility Icons */}
+        <div className="flex items-center gap-4 sm:gap-6">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#10b981] to-[#047857] flex items-center justify-center text-black font-black shadow-md shadow-emerald-500/30 group-hover:scale-105 transition-transform">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current text-black" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
             </div>
-
-            {/* Language Switcher */}
-            <div className="relative">
-              <button
-                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-1 hover:text-brand-gold transition-colors text-slate-300 font-medium uppercase"
-              >
-                <span>{locale === 'es' ? 'ES' : 'FR'}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
-              </button>
-              {langDropdownOpen && (
-                <div className="absolute right-0 mt-1 w-28 rounded-lg bg-brand-card border border-brand-navyLight shadow-xl py-1 z-50">
-                  <button
-                    onClick={() => {
-                      setLocale('es');
-                      setLangDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 hover:bg-brand-navyLight text-xs flex items-center justify-between ${
-                      locale === 'es' ? 'text-brand-gold font-bold' : 'text-slate-300'
-                    }`}
-                  >
-                    <span>Español</span>
-                    {locale === 'es' && <span className="text-brand-gold text-[10px]">●</span>}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLocale('fr');
-                      setLangDropdownOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-1.5 hover:bg-brand-navyLight text-xs flex items-center justify-between ${
-                      locale === 'fr' ? 'text-brand-gold font-bold' : 'text-slate-300'
-                    }`}
-                  >
-                    <span>Français</span>
-                    {locale === 'fr' && <span className="text-brand-gold text-[10px]">●</span>}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
-        {/* Brand Logo */}
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-gold via-yellow-400 to-amber-200 flex items-center justify-center font-black text-black text-2xl shadow-lg shadow-brand-gold/25 group-hover:scale-105 transition-transform">
-              N
-              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-brand-positive border-2 border-brand-dark"></span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-wider text-white flex items-center gap-1">
-                NEW <span className="text-brand-gold">BRAND</span>
-              </span>
-              <span className="text-[10px] tracking-widest text-slate-400 uppercase font-medium">
-                Regulated Gaming
+            <div className="flex items-center tracking-tight">
+              <span className="text-xl sm:text-2xl font-black text-white italic tracking-wider">
+                tin<span className="text-[#10b981]">bet</span>
               </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1">
-            <Link
-              href="#casino"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-200 hover:text-brand-gold hover:bg-brand-navyLight/60 transition-colors"
-            >
-              <Dices className="w-4 h-4 text-brand-gold" />
-              {t.nav.casino}
-            </Link>
-            <Link
-              href="#sportsbook"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-200 hover:text-brand-gold hover:bg-brand-navyLight/60 transition-colors"
-            >
-              <Trophy className="w-4 h-4 text-brand-gold" />
-              {t.nav.sportsbook}
-            </Link>
-            <Link
-              href="#live-casino"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-200 hover:text-brand-gold hover:bg-brand-navyLight/60 transition-colors"
-            >
-              <Flame className="w-4 h-4 text-brand-positive" />
-              {t.nav.liveCasino}
-            </Link>
-            <Link
-              href="#fast-games"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-200 hover:text-brand-gold hover:bg-brand-navyLight/60 transition-colors"
-            >
-              <Sparkles className="w-4 h-4 text-yellow-300" />
-              {t.nav.fastGames}
-            </Link>
-            <Link
-              href="#promotions"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-slate-200 hover:text-brand-gold hover:bg-brand-navyLight/60 transition-colors"
-            >
-              <Gift className="w-4 h-4 text-brand-gold" />
-              {t.nav.promotions}
-            </Link>
+          {/* Clock & Timezone */}
+          <div className="hidden md:flex items-center text-xs font-mono text-slate-400 bg-[#0e141a] px-2.5 py-1 rounded border border-slate-800">
+            <span>{currentTime}</span>
+          </div>
 
-            <Link
-              href="/pos"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black transition-all shadow-sm"
-              title="Abrir Terminal de Punto de Venta / Cajero Físico"
+          {/* Promociones Pill */}
+          <Link
+            href="#promotions"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#162925] border border-[#10b981]/40 text-[#10b981] text-xs font-bold uppercase hover:bg-[#10b981] hover:text-black transition-all"
+          >
+            <Gift className="w-3.5 h-3.5" />
+            <span>PROMOCIONES</span>
+          </Link>
+
+          {/* Utility Icons */}
+          <div className="hidden lg:flex items-center gap-2 text-slate-400">
+            <a
+              href="#featured-events"
+              className="p-1.5 rounded hover:bg-slate-800 hover:text-emerald-400 transition-colors"
+              title="Marcador en Vivo"
             >
-              <Store className="w-3.5 h-3.5" />
-              Terminal POS
-            </Link>
-          </nav>
+              <Tv className="w-4 h-4" />
+            </a>
+            <a
+              href="#sportsbook"
+              className="p-1.5 rounded hover:bg-slate-800 hover:text-emerald-400 transition-colors"
+              title="Estadísticas de Cuotas"
+            >
+              <BarChart2 className="w-4 h-4" />
+            </a>
+          </div>
         </div>
 
-        {/* Right Actions: Demo Balance, Bet Slip & User Auth */}
-        <div className="flex items-center gap-3">
-          {/* Balance Display (Real or Demo) */}
-          <div className="hidden sm:flex items-center gap-2 bg-brand-dark/90 border border-brand-navyLight px-3 py-1.5 rounded-lg">
-            <Coins className={`w-4 h-4 ${isRealMode ? 'text-emerald-400' : 'text-brand-gold'}`} />
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] text-slate-400 font-mono leading-none">
-                {isRealMode ? t.common.realBalance : t.common.demoBalance}
-              </span>
-              <span className={`text-sm font-mono font-bold ${isRealMode ? 'text-emerald-400' : 'text-brand-positive'}`}>
-                ${(isRealMode ? realBalance : demoBalance).toLocaleString('en-US', { minimumFractionDigits: 2 })} {currencySymbol}
-              </span>
-            </div>
-            {isRealMode ? (
-              <button
-                onClick={() => openWallet('deposit')}
-                title="Depositar fondos en cuenta de producción"
-                className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 hover:bg-emerald-400 text-black transition-colors"
-              >
-                + Recargar
-              </button>
-            ) : (
-              <button
-                onClick={resetDemoBalance}
-                title="Recargar saldo demo a $10,000"
-                className="p-1 rounded hover:bg-brand-navyLight text-slate-400 hover:text-white transition-colors"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </button>
+        {/* Right: Auth, Wallet, Language & POS Terminal */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Market Switcher */}
+          <div className="relative">
+            <button
+              onClick={() => setMarketDropdownOpen(!marketDropdownOpen)}
+              className="flex items-center gap-1 bg-[#1a232c] hover:bg-[#222e3a] border border-slate-700/80 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-200 transition-all"
+            >
+              <span>{market === 'MX' ? '🇲🇽 MXN' : '🇭🇹 HTG'}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+            {marketDropdownOpen && (
+              <div className="absolute right-0 mt-1 w-32 rounded-lg bg-[#161f28] border border-slate-700 shadow-2xl py-1 z-50">
+                <button
+                  onClick={() => {
+                    setMarket('MX');
+                    setMarketDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 hover:bg-slate-800 text-xs flex items-center justify-between ${
+                    market === 'MX' ? 'text-emerald-400 font-bold' : 'text-slate-300'
+                  }`}
+                >
+                  <span>🇲🇽 México (MXN)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMarket('HT');
+                    setMarketDropdownOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 hover:bg-slate-800 text-xs flex items-center justify-between ${
+                    market === 'HT' ? 'text-emerald-400 font-bold' : 'text-slate-300'
+                  }`}
+                >
+                  <span>🇭🇹 Haïti (HTG)</span>
+                </button>
+              </div>
             )}
           </div>
+
+          {/* User Auth Buttons or User Balance */}
+          {user ? (
+            <div className="flex items-center gap-2 bg-[#162029] border border-slate-700/80 px-3 py-1 rounded-lg">
+              <button
+                onClick={() => openWallet('deposit')}
+                className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+              >
+                <Coins className="w-4 h-4 text-emerald-400" />
+                <span className="font-mono font-black text-xs text-white">
+                  {currencySign} {realBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+              </button>
+              <button
+                onClick={logoutUser}
+                className="ml-2 p-1 text-slate-400 hover:text-rose-400 transition-colors"
+                title="Cerrar Sesión"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {/* REGISTRAR BUTTON (Bright Green) */}
+              <button
+                onClick={() => openAuth('register')}
+                className="bg-[#10b981] hover:bg-[#059669] text-black font-black uppercase text-xs tracking-wider px-4 sm:px-5 py-2 rounded-lg shadow-md shadow-emerald-500/25 transition-all active:scale-95"
+              >
+                REGISTRAR
+              </button>
+
+              {/* INICIO SESIÓN BUTTON (Dark Slate) */}
+              <button
+                onClick={() => openAuth('login')}
+                className="bg-[#1e293b] hover:bg-[#334155] text-white font-bold uppercase text-xs tracking-wider px-3 sm:px-4 py-2 rounded-lg border border-slate-700 transition-all active:scale-95"
+              >
+                INICIO SESIÓN
+              </button>
+            </div>
+          )}
+
+          {/* Language Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+              className="flex items-center gap-1 bg-[#1a232c] hover:bg-[#222e3a] border border-slate-700/80 px-2 py-1.5 rounded-lg text-xs font-bold text-slate-300 uppercase transition-all"
+            >
+              <span>{locale === 'es' ? 'ES' : 'FR'}</span>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+            {langDropdownOpen && (
+              <div className="absolute right-0 mt-1 w-24 rounded-lg bg-[#161f28] border border-slate-700 shadow-2xl py-1 z-50">
+                <button
+                  onClick={() => {
+                    setLocale('es');
+                    setLangDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-xs text-slate-300 hover:text-emerald-400 font-bold"
+                >
+                  Español
+                </button>
+                <button
+                  onClick={() => {
+                    setLocale('fr');
+                    setLangDropdownOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-800 text-xs text-slate-300 hover:text-emerald-400 font-bold"
+                >
+                  Français
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* POS Terminal Shortcut */}
+          <Link
+            href="/pos"
+            className="hidden xl:flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500 hover:text-black transition-all"
+            title="Terminal Punto de Venta Retail"
+          >
+            <Store className="w-3.5 h-3.5" />
+            <span>POS</span>
+          </Link>
 
           {/* Bet Slip Trigger */}
           <button
             onClick={() => setIsBetSlipOpen(!isBetSlipOpen)}
-            className="relative px-3 py-2 rounded-lg bg-brand-navyLight border border-brand-gold/30 hover:border-brand-gold text-slate-200 text-sm font-semibold flex items-center gap-2 transition-colors"
+            className="relative p-2 rounded-lg bg-[#1a232c] hover:bg-[#222e3a] border border-slate-700 text-slate-200"
+            title="Boleto de Apuestas"
           >
-            <Trophy className="w-4 h-4 text-brand-gold" />
-            <span className="hidden md:inline">{t.betSlip.title}</span>
+            <Coins className="w-4 h-4 text-emerald-400" />
             {betSelections.length > 0 && (
-              <span className="h-5 w-5 rounded-full bg-brand-gold text-black font-black text-xs flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#10b981] text-black font-black text-[10px] flex items-center justify-center animate-bounce">
                 {betSelections.length}
               </span>
             )}
           </button>
 
-          {/* User Auth Buttons or Profile */}
-          {user ? (
-            <div className="flex items-center gap-2">
-              <div className="hidden md:flex flex-col text-right">
-                <span className="text-xs font-semibold text-white">{user.name}</span>
-                <span className="text-[10px] text-brand-positive">● Verificado</span>
-              </div>
-              <button
-                onClick={logoutUser}
-                title="Cerrar sesión"
-                className="p-2 rounded-lg bg-brand-navyLight border border-slate-700 text-slate-300 hover:text-white hover:border-red-500 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => openAuth('login')}
-                className="px-3.5 py-2 rounded-lg text-sm font-bold text-slate-200 hover:text-white hover:bg-brand-navyLight/70 transition-colors flex items-center gap-1.5"
-              >
-                <User className="w-4 h-4 text-slate-400" />
-                <span className="hidden sm:inline">{t.common.login}</span>
-              </button>
-              <button
-                onClick={() => openAuth('register')}
-                className="px-4 py-2 rounded-lg text-sm font-black bg-gradient-to-r from-brand-gold via-yellow-400 to-amber-300 text-black hover:brightness-110 shadow-lg shadow-brand-gold/20 transition-all"
-              >
-                {t.common.register}
-              </button>
-            </div>
-          )}
-
-          {/* Mobile Menu Hamburger */}
+          {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-lg bg-brand-navyLight text-slate-300 hover:text-white"
+            className="lg:hidden p-2 rounded-lg bg-[#1a232c] text-slate-300 hover:text-white"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden bg-brand-dark/95 border-b border-brand-navyLight px-4 py-6 space-y-4">
-          <div className="sm:hidden flex items-center justify-between p-3 rounded-lg bg-brand-navy border border-brand-navyLight">
-            <div className="flex items-center gap-2">
-              <Coins className="w-4 h-4 text-brand-gold" />
-              <span className="text-xs text-slate-300">{t.common.demoBalance}:</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-mono font-bold text-brand-positive">
-                ${demoBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })} {currencySymbol}
-              </span>
-              <button onClick={resetDemoBalance} className="p-1 rounded bg-brand-navyLight text-slate-300">
-                <RefreshCw className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
+      {/* 2. SUB-HEADER CATEGORY RIBBON (Clean, uppercase, matching Tinbet) */}
+      <div className="bg-[#162029] border-t border-[#1f2b37] overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 sm:gap-2 h-11 text-xs font-extrabold whitespace-nowrap">
+          {menuItems.map((item) => {
+            const isActive = activeMenu === item.id;
+            return (
+              <a
+                key={item.id}
+                href={item.href}
+                onClick={() => setActiveMenu(item.id)}
+                className={`relative px-3.5 py-2.5 tracking-wider uppercase transition-all flex items-center gap-1.5 ${
+                  isActive
+                    ? 'text-[#10b981] border-b-2 border-[#10b981]'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/40'
+                }`}
+              >
+                {item.isLive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping inline-block" />
+                )}
+                <span>{item.label}</span>
+                {item.isNew && (
+                  <span className="absolute -top-1 right-1 bg-[#10b981] text-black text-[8px] font-black px-1.5 py-0.2 rounded-full uppercase shadow-sm">
+                    NEW
+                  </span>
+                )}
+              </a>
+            );
+          })}
+        </div>
+      </div>
 
-          <nav className="flex flex-col space-y-2">
-            <Link
-              href="#casino"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-200 hover:bg-brand-navyLight font-semibold text-sm"
+      {/* Mobile Menu Drawer */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden bg-[#121920] border-t border-slate-800 px-4 py-4 space-y-2">
+          {menuItems.map((item) => (
+            <a
+              key={item.id}
+              href={item.href}
+              onClick={() => {
+                setActiveMenu(item.id);
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-between py-2 text-sm font-bold text-slate-200 hover:text-emerald-400 border-b border-slate-800/50"
             >
-              <Dices className="w-5 h-5 text-brand-gold" />
-              {t.nav.casino}
-            </Link>
-            <Link
-              href="#sportsbook"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-200 hover:bg-brand-navyLight font-semibold text-sm"
-            >
-              <Trophy className="w-5 h-5 text-brand-gold" />
-              {t.nav.sportsbook}
-            </Link>
-            <Link
-              href="#live-casino"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-200 hover:bg-brand-navyLight font-semibold text-sm"
-            >
-              <Flame className="w-5 h-5 text-brand-positive" />
-              {t.nav.liveCasino}
-            </Link>
-            <Link
-              href="#fast-games"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-200 hover:bg-brand-navyLight font-semibold text-sm"
-            >
-              <Sparkles className="w-5 h-5 text-yellow-300" />
-              {t.nav.fastGames}
-            </Link>
-            <Link
-              href="#promotions"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-200 hover:bg-brand-navyLight font-semibold text-sm"
-            >
-              <Gift className="w-4 h-4 text-brand-gold" />
-              {t.nav.promotions}
-            </Link>
-          </nav>
+              <span>{item.label}</span>
+              {item.isNew && (
+                <span className="bg-[#10b981] text-black text-[9px] font-black px-2 py-0.5 rounded-full">
+                  NEW
+                </span>
+              )}
+            </a>
+          ))}
+          <Link
+            href="/pos"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2 py-2.5 text-sm font-bold text-emerald-400"
+          >
+            <Store className="w-4 h-4" />
+            <span>Terminal POS Retail (Cajero Físico)</span>
+          </Link>
         </div>
       )}
     </header>
   );
 };
-
