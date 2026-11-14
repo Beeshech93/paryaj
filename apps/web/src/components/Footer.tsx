@@ -46,10 +46,10 @@ export const Footer: React.FC = () => {
           {/* Brand Info */}
           <div className="col-span-2 space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-brand-gold flex items-center justify-center font-black text-black text-base">
-                N
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#10b981] to-[#047857] flex items-center justify-center font-black text-black text-base shadow-md shadow-emerald-500/20">
+                P
               </div>
-              <span className="text-lg font-black text-white tracking-wider">NEW BRAND</span>
+              <span className="text-lg font-black text-white tracking-wider uppercase">paryaj <span className="text-[#10b981]">milyon</span></span>
             </div>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
               Plataforma de software para entretenimiento regulado de última generación. Diseñada para
@@ -160,7 +160,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom bar */}
         <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-          <p>© 2026 NEW BRAND. {t.common.allRightsReserved}</p>
+          <p>© 2026 PARYAJ MILYON. {t.common.allRightsReserved}</p>
           <div className="flex items-center gap-4">
             <span className="text-slate-400">Jurisdicción: {market === 'MX' ? 'México' : 'Haïti'}</span>
             <span>·</span>

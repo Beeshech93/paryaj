@@ -4,7 +4,7 @@ export async function GET() {
   return NextResponse.json(
     {
       status: 'ok',
-      service: 'NEW BRAND Web Frontend',
+      service: 'Paryaj Milyon Web Frontend',
       version: '0.1.0',
       timestamp: new Date().toISOString(),
       compliance: {

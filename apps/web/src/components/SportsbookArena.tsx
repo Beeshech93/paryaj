@@ -129,14 +129,14 @@ export const SportsbookArena: React.FC = () => {
           { provider: 'Bet365 México', logo: 'B365', home: 1.65, draw: 3.7, away: 5.1 },
           { provider: 'Codere México', logo: 'CD', home: 1.6, draw: 3.6, away: 4.9 },
           { provider: 'Pinnacle Sports', logo: 'PIN', home: 1.64, draw: 3.72, away: 5.15 },
-          { provider: 'NEW BRAND Real Feed', logo: 'NB', home: 1.72, draw: 3.9, away: 5.4, isBest: true },
+          { provider: 'Paryaj Milyon Real Feed', logo: 'PM', home: 1.72, draw: 3.9, away: 5.4, isBest: true },
         ]
       : [
           { provider: 'Pari Nou Haïti', logo: 'PN', home: 1.4, draw: 4.0, away: 6.4 },
           { provider: 'Paryaj Lakay', logo: 'PL', home: 1.42, draw: 4.1, away: 6.5 },
           { provider: 'Bet365', logo: 'B365', home: 1.44, draw: 4.15, away: 6.6 },
           { provider: '1xBet Caraïbes', logo: '1X', home: 1.43, draw: 4.05, away: 6.5 },
-          { provider: 'NEW BRAND Real Feed', logo: 'NB', home: 1.49, draw: 4.3, away: 6.9, isBest: true },
+          { provider: 'Paryaj Milyon Real Feed', logo: 'PM', home: 1.49, draw: 4.3, away: 6.9, isBest: true },
         ];
 
   // Dynamic Live Feed from API
@@ -416,7 +416,7 @@ export const SportsbookArena: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-sm font-black tracking-wider text-brand-mint flex items-center gap-1.5">
                 <span className="text-white">SPORTSBOOK</span>
-                <span className="text-brand-mint">NEW BRAND</span>
+                <span className="text-brand-mint">Paryaj Milyon</span>
                 <Star className="w-3.5 h-3.5 fill-brand-mint text-brand-mint" />
               </span>
 
@@ -726,7 +726,7 @@ export const SportsbookArena: React.FC = () => {
                   <div className="px-3 py-2 bg-brand-dark/90 text-[10px] text-slate-400 flex items-center justify-between border-b border-brand-border">
                     <span className="uppercase font-mono font-bold">Comparativa Bookmakers Reales</span>
                     <span className="text-emerald-400 flex items-center gap-1 font-semibold">
-                      <Zap className="w-3 h-3" /> Mejor Cuota NEW BRAND
+                      <Zap className="w-3 h-3" /> Mejor Cuota Paryaj Milyon
                     </span>
                   </div>
                   <table className="w-full text-xs text-left">

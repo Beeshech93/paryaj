@@ -204,7 +204,7 @@ export const translations: Record<Locale, Translations> = {
       claimBtn: 'Activar Bono Demo',
     },
     benefits: {
-      title: '¿Por qué elegir NEW BRAND?',
+      title: '¿Por qué elegir Paryaj Milyon?',
       subtitle: 'Construido con tecnología moderna, seguridad inmutable y juego responsable.',
       b1Title: 'Ledger Inmutable de Doble Partida',
       b1Desc: 'Registro contable criptográfico para cada tirada, apuesta y movimiento demo.',
@@ -321,7 +321,7 @@ export const translations: Record<Locale, Translations> = {
       claimBtn: 'Activer le Bonus Démo',
     },
     benefits: {
-      title: 'Pourquoi Choisir NEW BRAND ?',
+      title: 'Pourquoi Choisir Paryaj Milyon ?',
       subtitle: 'Construit avec des technologies de pointe, sécurité immuable et jeu responsable.',
       b1Title: 'Grand Livre Immuable en Partie Double',
       b1Desc: 'Enregistrement cryptographique pour chaque tour de jeu et pari démo.',

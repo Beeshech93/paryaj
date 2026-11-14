@@ -15,7 +15,7 @@ export class HealthService {
 
     return {
       status: 'ok',
-      service: 'NEW BRAND API',
+      service: 'Paryaj Milyon API',
       version: '0.1.0',
       timestamp: new Date().toISOString(),
       uptimeSeconds,

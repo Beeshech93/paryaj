@@ -962,7 +962,7 @@ export default function PointOfSaleApp() {
           >
             {/* Ticket Header */}
             <div className="text-center border-b-2 border-dashed border-black pb-3 w-full">
-              <h2 className="font-black text-lg tracking-widest uppercase">NEW BRAND</h2>
+              <h2 className="font-black text-lg tracking-widest uppercase">PARYAJ MILYON</h2>
               <p className="text-[10px] uppercase font-bold tracking-wider">PUNTO DE VENTA Y BANCA AUTORIZADA</p>
               <p className="text-[10px] text-gray-800 font-semibold">{issuedTicket.agencyName}</p>
               <p className="text-[10px] text-gray-700">

@@ -87,7 +87,7 @@ export const Header: React.FC = () => {
             </div>
             <div className="flex items-center tracking-tight">
               <span className="text-xl sm:text-2xl font-black text-white italic tracking-wider">
-                tin<span className="text-[#10b981]">bet</span>
+                paryaj <span className="text-[#10b981]">milyon</span>
               </span>
             </div>
           </Link>

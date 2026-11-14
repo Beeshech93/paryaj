@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'NEW BRAND — Casino Online & Sportsbook',
+  title: 'Paryaj Milyon — Casino Online & Sportsbook',
   description:
     'Plataforma de entretenimiento regulado, apuestas deportivas, casino en vivo y juegos digitales para México y Haití.',
 };

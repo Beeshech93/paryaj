@@ -54,7 +54,7 @@ async function bootstrap() {
 
   // OpenAPI / Swagger Documentation
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('NEW BRAND — API Platform')
+    .setTitle('Paryaj Milyon — API Platform')
     .setDescription(
       'Core REST API for Regulated Online Casino, Sportsbook & Digital Gaming Platform (Markets: MX, HT)',
     )
