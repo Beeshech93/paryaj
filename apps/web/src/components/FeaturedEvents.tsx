@@ -96,9 +96,47 @@ interface FeaturedEventsProps {
 }
 
 export const FeaturedEvents: React.FC<FeaturedEventsProps> = ({ selectedSport, activeTab }) => {
-  const { t, addBetSelection, betSelections } = useApp();
+  const { t, market, addBetSelection, betSelections } = useApp();
+  const [realEvents, setRealEvents] = React.useState<MatchEvent[]>(mockEvents);
 
-  const filtered = mockEvents.filter((ev) => {
+  React.useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      try {
+        const res = await fetch(`/api/sports/feed?market=${market}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.events && Array.isArray(data.events) && data.events.length > 0) {
+            const mapped: MatchEvent[] = data.events.map((ev: any) => ({
+              id: ev.id,
+              sport: ev.sport === 'soccer' ? 'football' : ev.sport || 'football',
+              competition: ev.league,
+              homeTeam: ev.homeTeam || ev.name.split(' vs ')[0] || 'Local',
+              awayTeam: ev.awayTeam || ev.name.split(' vs ')[1] || 'Visita',
+              timeInfo: ev.time || (ev.isLive ? 'EN VIVO' : 'Programado'),
+              isLive: Boolean(ev.isLive),
+              odds: {
+                home: ev.odds1 || 1.90,
+                draw: ev.hasDraw ? ev.oddsX : undefined,
+                away: ev.odds2 || 1.90,
+                over25: 1.85,
+                under25: 1.95,
+              },
+            }));
+            if (isMounted) {
+              setRealEvents(mapped);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error loading featured feed:', e);
+      }
+    }
+    load();
+    return () => { isMounted = false; };
+  }, [market]);
+
+  const filtered = realEvents.filter((ev) => {
     if (activeTab === 'live' && !ev.isLive) return false;
     if (activeTab === 'upcoming' && ev.isLive) return false;
     if (selectedSport !== 'all' && ev.sport !== selectedSport) return false;

@@ -139,33 +139,73 @@ export const SportsbookArena: React.FC = () => {
           { provider: 'NEW BRAND Real Feed', logo: 'NB', home: 1.49, draw: 4.3, away: 6.9, isBest: true },
         ];
 
+  // Dynamic Live Feed from API
+  const [realFeedMatches, setRealFeedMatches] = useState<MatchFixture[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadFeed() {
+      try {
+        const res = await fetch(`/api/sports/feed?market=${market}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.events && Array.isArray(data.events) && data.events.length > 0) {
+            const mapped: MatchFixture[] = data.events.map((ev: any) => ({
+              id: ev.id,
+              home: ev.homeTeam || ev.name.split(' vs ')[0] || 'Local',
+              away: ev.awayTeam || ev.name.split(' vs ')[1] || 'Visita',
+              competition: ev.league,
+              time: ev.time || (ev.isLive ? 'EN VIVO' : 'Programado'),
+              isLive: Boolean(ev.isLive),
+              liveMinute: ev.minute,
+              score: ev.score,
+              odds: {
+                home: ev.odds1 || 1.90,
+                draw: ev.hasDraw ? ev.oddsX : 3.40,
+                away: ev.odds2 || 1.90,
+              },
+            }));
+            if (isMounted) setRealFeedMatches(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('Error fetching arena feed:', err);
+      }
+    }
+    loadFeed();
+    return () => { isMounted = false; };
+  }, [market]);
+
   // Real Matches per market
-  const featuredMatch: MatchFixture =
+  const defaultFeaturedMatch: MatchFixture =
     market === 'MX'
       ? {
-          id: 'mx-clasico-real',
-          home: 'Club América',
-          away: 'Chivas Guadalajara',
-          competition: 'Liga MX — Torneo Clausura (México)',
+          id: 'nba-ind-nyk',
+          home: 'Indiana Pacers',
+          away: 'New York Knicks',
+          competition: '🏀 NBA (Basketball)',
           time: 'EN VIVO',
           isLive: true,
-          liveMinute: "58'",
-          score: '2 - 1',
-          odds: { home: 1.72, draw: 3.9, away: 5.4 },
+          liveMinute: '2nd Qtr',
+          score: '52 - 48',
+          odds: { home: 1.82, draw: 15.0, away: 1.95 },
         }
       : {
-          id: 'ht-derby-real',
-          home: 'Violette AC',
-          away: 'Racing Club Haïtien',
-          competition: 'Championnat National D1 (Haïti)',
+          id: 'nba-orl-mil',
+          home: 'Orlando Magic',
+          away: 'Milwaukee Bucks',
+          competition: '🏀 NBA (Basketball)',
           time: 'AN DIRÈK',
           isLive: true,
-          liveMinute: "67'",
-          score: '1 - 0',
-          odds: { home: 1.49, draw: 4.3, away: 6.9 },
+          liveMinute: '2nd Qtr',
+          score: '41 - 35',
+          odds: { home: 1.03, draw: 40.0, away: 12.0 },
         };
 
-  const upcomingMatches: MatchFixture[] =
+  const featuredMatch: MatchFixture =
+    realFeedMatches.find((m) => m.isLive) || realFeedMatches[0] || defaultFeaturedMatch;
+
+  const staticUpcomingMatches: MatchFixture[] =
     market === 'MX'
       ? [
           {
@@ -261,6 +301,11 @@ export const SportsbookArena: React.FC = () => {
             odds: { home: 2.2, draw: 3.6, away: 3.05 },
           },
         ];
+
+  const upcomingMatches: MatchFixture[] =
+    realFeedMatches.length > 1
+      ? realFeedMatches.filter((m) => m.id !== featuredMatch.id)
+      : staticUpcomingMatches;
 
   // Helper for item stakes in single mode
   const getItemStake = (id: string) => itemStakes[id] || (isRealMode ? 100 : 1000);
