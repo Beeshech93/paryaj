@@ -99,7 +99,7 @@ export const Header: React.FC = () => {
 
           {/* Promociones Pill */}
           <Link
-            href="#promotions"
+            href="#promo-cards"
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[#162925] border border-[#10b981]/40 text-[#10b981] text-xs font-bold uppercase hover:bg-[#10b981] hover:text-black transition-all"
           >
             <Gift className="w-3.5 h-3.5" />

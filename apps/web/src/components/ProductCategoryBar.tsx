@@ -100,3 +100,4 @@ export const ProductCategoryBar: React.FC = () => {
     </div>
   );
 };
+

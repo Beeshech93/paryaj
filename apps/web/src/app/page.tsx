@@ -11,7 +11,6 @@ import { CasinoCategories } from '@/components/CasinoCategories';
 import { PopularGames } from '@/components/PopularGames';
 import { SportsSection } from '@/components/SportsSection';
 import { FeaturedEvents } from '@/components/FeaturedEvents';
-import { Promotions } from '@/components/Promotions';
 import { PlatformBenefits } from '@/components/PlatformBenefits';
 import { Footer } from '@/components/Footer';
 import { BetSlipDrawer } from '@/components/BetSlipDrawer';
@@ -58,8 +57,7 @@ function MainPlatform() {
         />
         <FeaturedEvents selectedSport={selectedSport} activeTab={sportsTab} />
 
-        {/* 8. Promociones y Beneficios */}
-        <Promotions />
+        {/* 8. Beneficios de la plataforma */}
         <PlatformBenefits />
       </main>
 

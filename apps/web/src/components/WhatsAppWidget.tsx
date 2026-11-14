@@ -24,3 +24,4 @@ export const WhatsAppWidget: React.FC = () => {
     </a>
   );
 };
+
