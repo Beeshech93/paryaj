@@ -158,12 +158,6 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Regulatory Mandatory Disclaimer Box */}
-        <div className="mt-10 p-4 rounded-xl bg-brand-dark/90 border border-slate-800 text-[11px] text-slate-400 space-y-2 leading-relaxed">
-          <p className="font-semibold text-slate-300">AVISO REGULATORIO Y DE CUMPLIMIENTO:</p>
-          <p>{t.footer.disclaimer}</p>
-        </div>
-
         {/* Bottom bar */}
         <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
           <p>© 2026 NEW BRAND. {t.common.allRightsReserved}</p>
